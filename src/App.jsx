@@ -38,43 +38,45 @@ const ciphers = [
   'VZBRGITYUPSDNHLXAWMJQOFECK',
 ];
 
-// const ciphers = cipherStrings.map((c) => c.split(''));
+function useCipher(type, position) {
+  let cipher = ciphers[type - 1];
 
-function useCipher(type) {
-  const cipher = ciphers[type];
-
+  // Make sure its within the bounds of the alphabet
+  const current = position % 26;
+  cipher = cipher.slice(current) + cipher.slice(0, current);
   return cipher;
 }
 
-function useRotor({ type, plainText, sequence }) {
+function useRotor({ type, position, plainText }) {
   // TODO create the encripted text from the settings
-  const cipher = useCipher(type);
+  const cipher = useCipher(type, position);
 
-  return '';
+  return cipher[ALPHABET.indexOf('E')];
 }
 
 function Rotor({ start = 0, type, plainText }) {
-  const [sequence, setSequence] = useState(start);
-  const encriptedText = useRotor({ type, plainText, sequence });
+  const [position, setPosition] = useState(start);
+  const encriptedText = useRotor({ type, position, plainText });
 
-  function handleSequenceChange(e) {
+  function handlePositionChange(e) {
     const currentValue = +e.target.value;
-    setSequence(currentValue);
+    setPosition(currentValue);
   }
 
   return (
     <>
       <p>{`I am a type ${type} cypher`}</p>
       <label for={`range${type}`}>Indicator Setting (Grundstellung)</label>
-      <p>{ALPHABET[sequence]}</p>
+      <p>Position: {ALPHABET[position]}</p>
+      <p>Cipher: {encriptedText}</p>
       <input
         type="range"
         id={`range${type}`}
         min="0"
         max="25"
         step="1"
-        value={sequence}
-        onChange={handleSequenceChange}
+        value={position}
+        onChange={handlePositionChange}
       />
     </>
   );
@@ -104,7 +106,7 @@ function App() {
 
   return (
     <div className="App">
-      <Rotor type={2} plainText={plainText} />
+      <Rotor type={3} start={6} plainText={plainText} />
       <input value={encodedText} readOnly />
       <textarea
         name="keyboard"
