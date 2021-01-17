@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useReducer,
+  useContext,
+} from 'react';
 import './App.css';
 
 const ALPHABET = [
@@ -47,26 +53,65 @@ function useCipher(type, position) {
   return cipher;
 }
 
-function useRotor({ type, position, plainText }) {
-  // TODO create the encripted text from the settings
-  const cipher = useCipher(type, position);
-
-  return cipher[ALPHABET.indexOf('E')];
+function initRotor(initialType) {
+  return {
+    type: initialType,
+    position: 0,
+    plainText: '',
+    encodedText: '',
+  };
 }
 
-function Rotor({ start = 0, type, plainText }) {
-  const [position, setPosition] = useState(start);
+function rotorReducer(state, action) {
+  switch (action.type) {
+    case 'position':
+      return {
+        ...state,
+        position: action.payload,
+      };
+    case 'encode':
+      // Transform plainText into encodedText
+      let { type, position, encodedText } = state;
+      position++;
+      const cipher = useCipher(type, position);
+      return {
+        ...state,
+        position,
+        encodedText: encodedText + cipher[ALPHABET.indexOf(action.payload)],
+      };
+    case 'reset':
+      return initRotor(action.payload);
+    default:
+      throw new Error(`Invalid action type "${action.type}" in rotorReducer`);
+  }
+}
+
+const RotorContext = React.createContext();
+RotorContext.displayName = 'Rotor Context';
+
+function RotorProvider(props) {
+  const value = useReducer(rotorReducer, 3, initRotor);
+  return <RotorContext.Provider value={value} {...props} />;
+}
+
+function useRotor({ type, position, plainText }) {
+  const cipher = useCipher(type, position);
+  return cipher[ALPHABET.indexOf(plainText)];
+}
+
+function RotorDisplay() {
+  const [{ position, type, plainText }, dispatch] = useContext(RotorContext);
   const encriptedText = useRotor({ type, position, plainText });
 
   function handlePositionChange(e) {
     const currentValue = +e.target.value;
-    setPosition(currentValue);
+    dispatch({ type: 'position', payload: currentValue });
   }
 
   return (
-    <>
-      <p>{`I am a type ${type} cypher`}</p>
-      <label for={`range${type}`}>Indicator Setting (Grundstellung)</label>
+    <div id={`rotor-${type}`} className="rotor">
+      <p>{`I am a type ${type} rotor`}</p>
+      <label htmlFor={`range${type}`}>Indicator Setting (Grundstellung)</label>
       <p>Position: {ALPHABET[position]}</p>
       <p>Cipher: {encriptedText}</p>
       <input
@@ -78,13 +123,13 @@ function Rotor({ start = 0, type, plainText }) {
         value={position}
         onChange={handlePositionChange}
       />
-    </>
+    </div>
   );
 }
 
-function App() {
-  const [plainText, setPlainText] = useState('');
-  const [encodedText, setEncodedText] = useState('');
+function Board() {
+  const [rawText, setRawText] = useState('');
+  const [{ plainText, encodedText }, dispatch] = useContext(RotorContext);
 
   // Make sure to limit characters to alphabetical characters
   function handleInputChange(e) {
@@ -95,26 +140,36 @@ function App() {
       ? match?.join('').toUpperCase()
       : '';
 
-    setPlainText(text);
-    setEncodedText(matchedText);
+    setRawText(text);
+    dispatch({ type: 'encode', payload: matchedText.slice(-1) });
   }
 
   function reset() {
-    setPlainText('');
-    setEncodedText('');
+    dispatch({ type: 'reset', payload: 3 });
+    setRawText('');
   }
 
   return (
-    <div className="App">
-      <Rotor type={3} start={6} plainText={plainText} />
+    <div>
       <input value={encodedText} readOnly />
       <textarea
         name="keyboard"
         id="keyboard"
-        value={plainText}
+        value={rawText}
         onChange={handleInputChange}
       />
       <button onClick={reset}>Reset</button>
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <div className="App">
+      <RotorProvider>
+        <RotorDisplay />
+        <Board />
+      </RotorProvider>
     </div>
   );
 }
