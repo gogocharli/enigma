@@ -131,17 +131,28 @@ function Board() {
   const [rawText, setRawText] = useState('');
   const [{ plainText, encodedText }, dispatch] = useContext(RotorContext);
 
-  // Make sure to limit characters to alphabetical characters
   function handleInputChange(e) {
     e.preventDefault();
     const text = e.target.value;
-    const match = text.match(/[A-Z]/gi);
-    const matchedText = Boolean(text.length)
-      ? match?.join('').toUpperCase()
-      : '';
+
+    // Make sure there is no deletion as it would break decription
+    if (text.length < rawText.length) return;
+
+    // Don't pass a whitespace character to the enigma system
+    const spaceMatch = text.match(/\s$/g);
+    if (spaceMatch?.length >= 1) {
+      setRawText(text);
+      return;
+    }
+
+    // Check if its a letter from the alphabet
+    const charMatch = text.match(/[A-Z]/gi);
+    const matchedText =
+      text.length > 0 ? charMatch?.join('').toUpperCase() : '';
+    const lastUpdatedChar = matchedText.slice(-1);
 
     setRawText(text);
-    dispatch({ type: 'encode', payload: matchedText.slice(-1) });
+    dispatch({ type: 'encode', payload: lastUpdatedChar });
   }
 
   function reset() {
@@ -152,14 +163,15 @@ function Board() {
   return (
     <div>
       <input value={encodedText} readOnly />
-      <textarea
-        name="keyboard"
-        id="keyboard"
-        value={rawText}
-        onChange={handleInputChange}
-      />
+      <Keyboard text={rawText} onChange={handleInputChange} />
       <button onClick={reset}>Reset</button>
     </div>
+  );
+}
+
+function Keyboard({ text, onChange }) {
+  return (
+    <textarea name="keyboard" id="keyboard" value={text} onChange={onChange} />
   );
 }
 
