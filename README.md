@@ -1,4 +1,4 @@
-# New Project
+# Enigma
 
 > ✨ Bootstrapped with Create Snowpack App (CSA).
 
