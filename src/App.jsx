@@ -59,6 +59,7 @@ function initRotor(initialType) {
     position: 0,
     plainText: '',
     encodedText: '',
+    lastAction: 'init',
   };
 }
 
@@ -68,6 +69,7 @@ function rotorReducer(state, action) {
       return {
         ...state,
         position: action.payload,
+        lastAction: 'position',
       };
     case 'encode':
       // Transform plainText into encodedText
@@ -78,6 +80,13 @@ function rotorReducer(state, action) {
         ...state,
         position,
         encodedText: encodedText + cipher[ALPHABET.indexOf(action.payload)],
+        lastAction: 'encode',
+      };
+    case 'jump':
+      // Go back to a previous state
+      return {
+        ...action.payload,
+        lastAction: 'jump',
       };
     case 'reset':
       return initRotor(action.payload);
@@ -90,8 +99,28 @@ const RotorContext = React.createContext();
 RotorContext.displayName = 'Rotor Context';
 
 function RotorProvider(props) {
-  const value = useReducer(rotorReducer, 3, initRotor);
-  return <RotorContext.Provider value={value} {...props} />;
+  const [state, dispatch] = useReducer(rotorReducer, 3, initRotor);
+  return <RotorContext.Provider value={[state, dispatch]} {...props} />;
+}
+
+const HistoryContext = React.createContext();
+HistoryContext.displayName = 'History Context';
+
+function StateHistoryProvider(props) {
+  const [state] = React.useContext(RotorContext);
+  const [step, setStep] = useLocalStorage('__enigma-step__', -1, false);
+  const [history, setHistory] = useLocalStorage(
+    '__enigma-history__',
+    [],
+    false,
+  );
+
+  return (
+    <HistoryContext.Provider
+      value={{ step, setStep, history, setHistory }}
+      {...props}
+    />
+  );
 }
 
 function useRotor({ type, position, plainText }) {
@@ -129,19 +158,37 @@ function RotorDisplay() {
 
 function Board() {
   const [rawText, setRawText] = useState('');
-  const [{ plainText, encodedText }, dispatch] = useContext(RotorContext);
+  const [state, dispatch] = useContext(RotorContext);
+  const { step, setStep, history, setHistory } = useContext(HistoryContext);
+
+  // Update the values in history with the new state every time it changes
+  React.useEffect(() => {
+    // We are not storing the new state when jumping to another
+    if (state.lastAction === 'jump') return;
+
+    const currentState = { ...state };
+    setStep((prevStep) => prevStep + 1);
+    setHistory((prevState) => {
+      return [...prevState, currentState];
+    });
+  }, [state]);
+
+  const { plainText, encodedText } = state;
 
   function handleInputChange(e) {
     e.preventDefault();
     const text = e.target.value;
 
-    // Make sure there is no deletion as it would break decription
-    if (text.length < rawText.length) return;
+    // Have the deletion restore the rotors state
+    if (text.length < rawText.length) {
+      previous();
+      return;
+    }
 
-    // Don't pass a whitespace character to the enigma system
+    // TODO Support whitespace character
+    // Disabling for now because of wonky state
     const spaceMatch = text.match(/\s$/g);
     if (spaceMatch?.length >= 1) {
-      setRawText(text);
       return;
     }
 
@@ -157,7 +204,19 @@ function Board() {
 
   function reset() {
     dispatch({ type: 'reset', payload: 3 });
+    setStep(-1);
+    setHistory([]);
     setRawText('');
+  }
+
+  function previous() {
+    const previousStep = step - 1;
+    console.log(previousStep);
+    if (previousStep >= 0) {
+      dispatch({ type: 'jump', payload: history[previousStep] });
+      setStep((prevStep) => prevStep - 1);
+      setRawText((prevText) => prevText.slice(0, -1));
+    }
   }
 
   return (
@@ -165,6 +224,7 @@ function Board() {
       <input value={encodedText} readOnly />
       <Keyboard text={rawText} onChange={handleInputChange} />
       <button onClick={reset}>Reset</button>
+      <button onClick={previous}>Go Back</button>
     </div>
   );
 }
@@ -179,11 +239,42 @@ function App() {
   return (
     <div className="App">
       <RotorProvider>
-        <RotorDisplay />
-        <Board />
+        <StateHistoryProvider>
+          <RotorDisplay />
+          <Board />
+        </StateHistoryProvider>
       </RotorProvider>
     </div>
   );
 }
 
 export default App;
+
+function useLocalStorage(
+  key,
+  initalValue = '',
+  persistValue = true,
+  { serialize = JSON.stringify, deserialize = JSON.parse } = {},
+) {
+  const [state, setState] = React.useState(() => {
+    const storedValue = window.localStorage.getItem(key);
+    if (storedValue && persistValue) {
+      return deserialize(storedValue);
+    }
+    return typeof initalValue == 'function' ? initalValue() : initalValue;
+  });
+
+  const prevKeyRef = React.useRef(key);
+  React.useEffect(() => {
+    const prevKey = prevKeyRef.current;
+    if (prevKey !== key) {
+      window.localStorage.removeItem(prevKey);
+      prevKeyRef.current = key;
+    }
+
+    window.localStorage.setItem(key, serialize(state));
+    prevKeyRef.current = key;
+  }, [key, serialize, state]);
+
+  return [state, setState];
+}
