@@ -157,7 +157,7 @@ packages:
       integrity: sha512-U40A76x5gTwmESz+qiqssqmeEsKvcSyvtgktrm0uzcARAmM9I1jR221f6Oq+GmHrcD+LvZDag1UTOTe2fL3TeA==
   /@babel/runtime-corejs3/7.12.5:
     dependencies:
-      core-js-pure: 3.8.1
+      core-js-pure: 3.8.3
       regenerator-runtime: 0.13.7
     dev: true
     resolution:
@@ -228,7 +228,7 @@ packages:
   /@nodelib/fs.walk/1.2.6:
     dependencies:
       '@nodelib/fs.scandir': 2.1.4
-      fastq: 1.10.0
+      fastq: 1.10.1
     dev: true
     engines:
       node: '>= 8'
@@ -1039,11 +1039,11 @@ packages:
       node: '>= 0.8'
     resolution:
       integrity: sha512-8aPsApQfebXnuI+537McwYsDtjVxGm8gTIzQI3FDW6t5t/DAhERxtnbEPN/8RX+uZthoz4eCOgloXaE5cYyNow==
-  /core-js-pure/3.8.1:
+  /core-js-pure/3.8.3:
     dev: true
     requiresBuild: true
     resolution:
-      integrity: sha512-Se+LaxqXlVXGvmexKGPvnUIYC1jwXu1H6Pkyb3uBM5d8/NELMYCHs/4/roD7721NxrTLyv7e5nXd5/QLBO+10g==
+      integrity: sha512-V5qQZVAr9K0xu7jXg1M7qTEwuxUgqr7dUOezGaNa7i+Xn9oXAU/d1fzqD9ObuwpVQOaorO5s70ckyi1woP9lVA==
   /debounce/1.2.0:
     dev: true
     resolution:
@@ -1237,12 +1237,12 @@ packages:
       node: '>=8'
     resolution:
       integrity: sha512-kr/Oo6PX51265qeuCYsyGypiO5uJFgBS0jksyG7FUeCyQzNwYnzrNIMR1NXfkZXsMYXYLRAHgISHBz8gQcxKHQ==
-  /fastq/1.10.0:
+  /fastq/1.10.1:
     dependencies:
       reusify: 1.0.4
     dev: true
     resolution:
-      integrity: sha512-NL2Qc5L3iQEsyYzweq7qfgy5OtXCmGzGvhElGEd/SoFWEMOEczNh5s5ocaF01HDetxz+p8ecjNPA6cZxxIHmzA==
+      integrity: sha512-AWuv6Ery3pM+dY7LYS8YIaCiQvUaos9OB1RyNgaOWnaX+Tik7Onvcsf8x8c+YtDeT0maYLniBip2hox5KtEXXA==
   /fd-slicer/1.1.0:
     dependencies:
       pend: 1.2.0
