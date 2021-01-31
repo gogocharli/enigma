@@ -36,16 +36,41 @@ const ALPHABET = [
   'Z',
 ];
 
-const ciphers = [
-  'EKMFLGDQVZNTOWYHXUSPAIBRCJ',
-  'AJDKSIRUXBLHWTMCQGZNPYFVOE',
-  'BDFHJLCPRTXVZNYEIWGAKMUSQO',
-  'ESOVPZJAYQUIRHXLNFTGKDCMWB',
-  'VZBRGITYUPSDNHLXAWMJQOFECK',
+const rotorsModels = [
+  {
+    type: 'I',
+    cipher: 'EKMFLGDQVZNTOWYHXUSPAIBRCJ',
+    turnover: 'Q',
+  },
+  {
+    type: 'II',
+    cipher: 'AJDKSIRUXBLHWTMCQGZNPYFVOE',
+    turnover: 'E',
+  },
+  {
+    type: 'III',
+    cipher: 'BDFHJLCPRTXVZNYEIWGAKMUSQO',
+    turnover: 'V',
+  },
+  {
+    type: 'IV',
+    cipher: 'ESOVPZJAYQUIRHXLNFTGKDCMWB',
+    turnover: 'J',
+  },
+  {
+    type: 'V',
+    cipher: 'VZBRGITYUPSDNHLXAWMJQOFECK',
+    turnover: 'Z',
+  },
 ];
 
-function useCipher(type, position) {
-  let cipher = ciphers[type - 1];
+/**
+ * Encodes an alphabetical character to the matching cipher caracter
+ * @param {number} type The current rotor's type
+ * @param {number} position The current rotor's position
+ */
+function encodeChar(type, position) {
+  let { cipher } = rotorsModels[type - 1];
 
   // Make sure its within the bounds of the alphabet
   const current = position % 26;
@@ -68,18 +93,25 @@ function rotorReducer(state, action) {
     case 'position':
       return {
         ...state,
-        position: action.payload,
+        position: action.payload % 26,
         lastAction: 'position',
       };
     case 'encode':
       // Transform plainText into encodedText
       let { type, position, encodedText } = state;
+
+      // When a key is pressed, the rotor moves position before encoding
       position++;
-      const cipher = useCipher(type, position);
+      position %= 26;
+
+      // Get the corresponding character from the cypher
+      const cipher = encodeChar(type, position);
+      const { plainText, updateChar } = action.payload;
       return {
         ...state,
         position,
-        encodedText: encodedText + cipher[ALPHABET.indexOf(action.payload)],
+        plainText,
+        encodedText: encodedText + cipher[ALPHABET.indexOf(updateChar)],
         lastAction: 'encode',
       };
     case 'jump':
@@ -123,14 +155,8 @@ function StateHistoryProvider(props) {
   );
 }
 
-function useRotor({ type, position, plainText }) {
-  const cipher = useCipher(type, position);
-  return cipher[ALPHABET.indexOf(plainText)];
-}
-
 function RotorDisplay() {
   const [{ position, type, plainText }, dispatch] = useContext(RotorContext);
-  const encriptedText = useRotor({ type, position, plainText });
 
   function handlePositionChange(e) {
     const currentValue = +e.target.value;
@@ -142,7 +168,6 @@ function RotorDisplay() {
       <p>{`I am a type ${type} rotor`}</p>
       <label htmlFor={`range${type}`}>Indicator Setting (Grundstellung)</label>
       <p>Position: {ALPHABET[position]}</p>
-      <p>Cipher: {encriptedText}</p>
       <input
         type="range"
         id={`range${type}`}
@@ -160,6 +185,7 @@ function Board() {
   const [rawText, setRawText] = useState('');
   const [state, dispatch] = useContext(RotorContext);
   const { step, setStep, history, setHistory } = useContext(HistoryContext);
+  const { encodedText } = state;
 
   // Update the values in history with the new state every time it changes
   React.useEffect(() => {
@@ -173,19 +199,18 @@ function Board() {
     });
   }, [state]);
 
-  const { plainText, encodedText } = state;
-
   function handleInputChange(e) {
     e.preventDefault();
     const text = e.target.value;
 
-    // Have the deletion restore the rotors state
+    // Have the backspace key restore the rotors state
+    // There's also the delete key however
     if (text.length < rawText.length) {
       previous();
       return;
     }
 
-    // TODO Support whitespace character
+    // TODO Support whitespace character — (it's actually pretty hard)
     // Disabling for now because of wonky state
     const spaceMatch = text.match(/\s$/g);
     if (spaceMatch?.length >= 1) {
@@ -199,9 +224,13 @@ function Board() {
     const lastUpdatedChar = matchedText.slice(-1);
 
     setRawText(text);
-    dispatch({ type: 'encode', payload: lastUpdatedChar });
+    dispatch({
+      type: 'encode',
+      payload: { plainText: text, updateChar: lastUpdatedChar },
+    });
   }
 
+  // Resets all state within the app and clears history
   function reset() {
     dispatch({ type: 'reset', payload: 3 });
     setStep(-1);
@@ -209,10 +238,11 @@ function Board() {
     setRawText('');
   }
 
+  // Goes back to previous state
   function previous() {
     const previousStep = step - 1;
-    console.log(previousStep);
     if (previousStep >= 0) {
+      // Jump to previous state, update the history pointer, and remove last character
       dispatch({ type: 'jump', payload: history[previousStep] });
       setStep((prevStep) => prevStep - 1);
       setRawText((prevText) => prevText.slice(0, -1));
