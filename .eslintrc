@@ -1,11 +1,12 @@
 {
   "extends": ["wesbos"],
   "overrides": [
-      {
-          "files": "*",
-          "rules": {
-              "react/jsx-props-no-spreading"
-          }
+    {
+      "files": "*",
+      "rules": {
+        "react/jsx-props-no-spreading": "off",
+        "no-use-before-define": "off"
       }
+    }
   ]
 }

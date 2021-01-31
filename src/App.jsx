@@ -60,11 +60,11 @@ const ROTORS = [
 
 /**
  * Encodes an alphabetical character to the matching cipher caracter
- * @param {number} type The current rotor's type
+ * @param {number} rotorType The current rotor's type
  * @param {number} position The current rotor's position
  */
-function encodeChar(type, position) {
-  let {cipher} = ROTORS[type - 1];
+function encodeChar(rotorType, position) {
+  let {cipher} = ROTORS[rotorType - 1];
 
   // Make sure its within the bounds of the alphabet
   const current = position % 26;
@@ -74,7 +74,7 @@ function encodeChar(type, position) {
 
 function initRotor(initialType) {
   return {
-    type: initialType,
+    rotorType: initialType,
     position: 0,
     plainText: '',
     encodedText: '',
@@ -92,14 +92,14 @@ function rotorReducer(state, action) {
       };
     case 'encode': {
       // Transform plainText into encodedText
-      let {type, position, encodedText} = state;
+      let {rotorType, position, encodedText} = state;
 
       // When a key is pressed, the rotor moves position before encoding
       position += 1;
       position %= 26;
 
       // Get the corresponding character from the cypher
-      const cipher = encodeChar(type, position);
+      const cipher = encodeChar(rotorType, position);
       const {plainText, updateChar} = action.payload;
       return {
         ...state,
@@ -150,9 +150,7 @@ function StateHistoryProvider(props) {
 }
 
 function RotorDisplay() {
-  const [{position, type, plainText}, dispatch] = React.useContext(
-    RotorContext,
-  );
+  const [{position, rotorType}, dispatch] = React.useContext(RotorContext);
 
   function handlePositionChange(e) {
     const currentValue = +e.target.value;
@@ -160,13 +158,16 @@ function RotorDisplay() {
   }
 
   return (
-    <div id={`rotor-${type}`} className="rotor">
-      <p>{`I am a type ${type} rotor`}</p>
-      <label htmlFor={`range${type}`}>Indicator Setting (Grundstellung)</label>
+    <div id={`rotor-${rotorType}`} className="rotor">
+      <p>{`I am a type ${rotorType} rotor`}</p>
+      {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
+      <label htmlFor={`range${rotorType}`}>
+        Indicator Setting (Grundstellung)
+      </label>
       <p>Position: {ALPHABET[position]}</p>
       <input
         type="range"
-        id={`range${type}`}
+        id={`range${rotorType}`}
         min="0"
         max="25"
         step="1"
@@ -190,9 +191,7 @@ function Board() {
 
     const currentState = {...state};
     setStep((prevStep) => prevStep + 1);
-    setHistory((prevState) => {
-      return [...prevState, currentState];
-    });
+    setHistory((prevState) => [...prevState, currentState]);
   }, [setHistory, setStep, state]);
 
   function handleInputChange(e) {
