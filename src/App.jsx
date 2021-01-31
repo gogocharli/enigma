@@ -1,10 +1,4 @@
-import React, {
-  useState,
-  useEffect,
-  useRef,
-  useReducer,
-  useContext,
-} from 'react';
+import * as React from 'react';
 import './App.css';
 
 const ALPHABET = [
@@ -36,7 +30,7 @@ const ALPHABET = [
   'Z',
 ];
 
-const rotorsModels = [
+const ROTORS = [
   {
     type: 'I',
     cipher: 'EKMFLGDQVZNTOWYHXUSPAIBRCJ',
@@ -70,7 +64,7 @@ const rotorsModels = [
  * @param {number} position The current rotor's position
  */
 function encodeChar(type, position) {
-  let { cipher } = rotorsModels[type - 1];
+  let {cipher} = ROTORS[type - 1];
 
   // Make sure its within the bounds of the alphabet
   const current = position % 26;
@@ -96,17 +90,17 @@ function rotorReducer(state, action) {
         position: action.payload % 26,
         lastAction: 'position',
       };
-    case 'encode':
+    case 'encode': {
       // Transform plainText into encodedText
-      let { type, position, encodedText } = state;
+      let {type, position, encodedText} = state;
 
       // When a key is pressed, the rotor moves position before encoding
-      position++;
+      position += 1;
       position %= 26;
 
       // Get the corresponding character from the cypher
       const cipher = encodeChar(type, position);
-      const { plainText, updateChar } = action.payload;
+      const {plainText, updateChar} = action.payload;
       return {
         ...state,
         position,
@@ -114,6 +108,7 @@ function rotorReducer(state, action) {
         encodedText: encodedText + cipher[ALPHABET.indexOf(updateChar)],
         lastAction: 'encode',
       };
+    }
     case 'jump':
       // Go back to a previous state
       return {
@@ -131,7 +126,7 @@ const RotorContext = React.createContext();
 RotorContext.displayName = 'Rotor Context';
 
 function RotorProvider(props) {
-  const [state, dispatch] = useReducer(rotorReducer, 3, initRotor);
+  const [state, dispatch] = React.useReducer(rotorReducer, 3, initRotor);
   return <RotorContext.Provider value={[state, dispatch]} {...props} />;
 }
 
@@ -139,7 +134,6 @@ const HistoryContext = React.createContext();
 HistoryContext.displayName = 'History Context';
 
 function StateHistoryProvider(props) {
-  const [state] = React.useContext(RotorContext);
   const [step, setStep] = useLocalStorage('__enigma-step__', -1, false);
   const [history, setHistory] = useLocalStorage(
     '__enigma-history__',
@@ -149,18 +143,20 @@ function StateHistoryProvider(props) {
 
   return (
     <HistoryContext.Provider
-      value={{ step, setStep, history, setHistory }}
+      value={{step, setStep, history, setHistory}}
       {...props}
     />
   );
 }
 
 function RotorDisplay() {
-  const [{ position, type, plainText }, dispatch] = useContext(RotorContext);
+  const [{position, type, plainText}, dispatch] = React.useContext(
+    RotorContext,
+  );
 
   function handlePositionChange(e) {
     const currentValue = +e.target.value;
-    dispatch({ type: 'position', payload: currentValue });
+    dispatch({type: 'position', payload: currentValue});
   }
 
   return (
@@ -182,22 +178,22 @@ function RotorDisplay() {
 }
 
 function Board() {
-  const [rawText, setRawText] = useState('');
-  const [state, dispatch] = useContext(RotorContext);
-  const { step, setStep, history, setHistory } = useContext(HistoryContext);
-  const { encodedText } = state;
+  const [rawText, setRawText] = React.useState('');
+  const [state, dispatch] = React.useContext(RotorContext);
+  const {step, setStep, history, setHistory} = React.useContext(HistoryContext);
+  const {encodedText} = state;
 
   // Update the values in history with the new state every time it changes
   React.useEffect(() => {
     // We are not storing the new state when jumping to another
     if (state.lastAction === 'jump') return;
 
-    const currentState = { ...state };
+    const currentState = {...state};
     setStep((prevStep) => prevStep + 1);
     setHistory((prevState) => {
       return [...prevState, currentState];
     });
-  }, [state]);
+  }, [setHistory, setStep, state]);
 
   function handleInputChange(e) {
     e.preventDefault();
@@ -226,13 +222,13 @@ function Board() {
     setRawText(text);
     dispatch({
       type: 'encode',
-      payload: { plainText: text, updateChar: lastUpdatedChar },
+      payload: {plainText: text, updateChar: lastUpdatedChar},
     });
   }
 
   // Resets all state within the app and clears history
   function reset() {
-    dispatch({ type: 'reset', payload: 3 });
+    dispatch({type: 'reset', payload: 3});
     setStep(-1);
     setHistory([]);
     setRawText('');
@@ -243,7 +239,7 @@ function Board() {
     const previousStep = step - 1;
     if (previousStep >= 0) {
       // Jump to previous state, update the history pointer, and remove last character
-      dispatch({ type: 'jump', payload: history[previousStep] });
+      dispatch({type: 'jump', payload: history[previousStep]});
       setStep((prevStep) => prevStep - 1);
       setRawText((prevText) => prevText.slice(0, -1));
     }
@@ -253,13 +249,17 @@ function Board() {
     <div>
       <input value={encodedText} readOnly />
       <Keyboard text={rawText} onChange={handleInputChange} />
-      <button onClick={reset}>Reset</button>
-      <button onClick={previous}>Go Back</button>
+      <button type="button" onClick={reset}>
+        Reset
+      </button>
+      <button type="button" onClick={previous}>
+        Go Back
+      </button>
     </div>
   );
 }
 
-function Keyboard({ text, onChange }) {
+function Keyboard({text, onChange}) {
   return (
     <textarea name="keyboard" id="keyboard" value={text} onChange={onChange} />
   );
@@ -284,14 +284,14 @@ function useLocalStorage(
   key,
   initalValue = '',
   persistValue = true,
-  { serialize = JSON.stringify, deserialize = JSON.parse } = {},
+  {serialize = JSON.stringify, deserialize = JSON.parse} = {},
 ) {
   const [state, setState] = React.useState(() => {
     const storedValue = window.localStorage.getItem(key);
     if (storedValue && persistValue) {
       return deserialize(storedValue);
     }
-    return typeof initalValue == 'function' ? initalValue() : initalValue;
+    return typeof initalValue === 'function' ? initalValue() : initalValue;
   });
 
   const prevKeyRef = React.useRef(key);
