@@ -60,22 +60,75 @@ const ROTORS = [
 
 /**
  * Encodes an alphabetical character to the matching cipher caracter
- * @param {number} rotorType The current rotor's type
- * @param {number} position The current rotor's position
+ * @param {string} char
+ * @param {{rotorType: number, position: number, turnover: number}[]} rotors
  */
-function encodeChar(rotorType, position) {
-  let {cipher} = ROTORS[rotorType - 1];
+function encodeChar(char, rotors) {
+  // The encoding is done from last to first
+  const reverseRotors = [...rotors].reverse();
 
-  // Make sure its within the bounds of the alphabet
-  const current = position % 26;
-  cipher = cipher.slice(current) + cipher.slice(0, current);
-  return cipher;
+  // Get the current cipher for each rotor
+  const currentCiphers = reverseRotors.map(function extractCipher({
+    rotorType,
+    position,
+  }) {
+    let {cipher} = ROTORS[rotorType - 1];
+    cipher = cipher.slice(position) + cipher.slice(0, position);
+    return cipher;
+  });
+
+  // Encode the character through each one of them
+  const cipherText = currentCiphers.reduce(function encode(
+    currentChar,
+    cipher,
+  ) {
+    const newChar = cipher[ALPHABET.indexOf(currentChar)];
+
+    return newChar;
+  },
+  char);
+
+  return cipherText;
 }
 
-function initRotor(initialType) {
-  return {
-    rotorType: initialType,
+function getTurnoverIndex(rotorType) {
+  const {turnover} = ROTORS[rotorType - 1];
+  const turnoverIndex = ALPHABET.indexOf(turnover);
+  return turnoverIndex;
+}
+
+function getRotors(rotorTypes) {
+  const rotors = rotorTypes.map((rotorType) => ({
+    key: ROTORS[rotorType - 1].type,
+    rotorType,
     position: 0,
+    turnover: getTurnoverIndex(rotorType),
+  }));
+
+  return rotors;
+}
+
+function updateTurnover(rotor, index, rotorList) {
+  // Always increment the last rotor's position
+  // Increment a rotor if the previous just incremented past their turnover position
+  const previousRotor = rotorList[index - 1];
+  if (index === 0 || previousRotor.position === previousRotor.turnover + 1) {
+    rotor.position += 1;
+    rotor.position %= 26;
+  }
+  return rotor;
+}
+
+function updateRotorsPositions(rotors) {
+  // Reversing the array here is the fastest way to update them
+  const newRotorState = [...rotors].reverse().map(updateTurnover);
+  return newRotorState.reverse();
+}
+
+function initRotors(initialTypes) {
+  const rotors = getRotors(initialTypes);
+  return {
+    rotors,
     plainText: '',
     encodedText: '',
     lastAction: 'init',
@@ -84,39 +137,56 @@ function initRotor(initialType) {
 
 function rotorReducer(state, action) {
   switch (action.type) {
-    case 'position':
+    case 'setup': {
+      // Choose rotors
+      const {payload: rotorTypes} = action;
+      const rotors = getRotors(rotorTypes);
       return {
         ...state,
-        position: action.payload % 26,
+        rotors,
+        lastAction: 'setup',
+      };
+    }
+    case 'position': {
+      // Set position of a rotor
+      const {type, position: newPosition} = action.payload;
+      const {rotors} = state;
+      const rotor = rotors.find(({rotorType}) => rotorType === type);
+      const rotorIndex = rotors.indexOf(rotor);
+      rotors[rotorIndex].position = newPosition;
+
+      return {
+        ...state,
+        rotors,
         lastAction: 'position',
       };
+    }
     case 'encode': {
       // Transform plainText into encodedText
-      let {rotorType, position, encodedText} = state;
+      let {rotors, encodedText} = state;
 
       // When a key is pressed, the rotor moves position before encoding
-      position += 1;
-      position %= 26;
+      rotors = updateRotorsPositions(rotors);
 
       // Get the corresponding character from the cypher
-      const cipher = encodeChar(rotorType, position);
       const {plainText, updateChar} = action.payload;
+      const newCipherChar = encodeChar(updateChar, rotors);
       return {
-        ...state,
-        position,
+        rotors,
         plainText,
-        encodedText: encodedText + cipher[ALPHABET.indexOf(updateChar)],
+        encodedText: encodedText + newCipherChar,
         lastAction: 'encode',
       };
     }
-    case 'jump':
+    case 'jump': {
       // Go back to a previous state
       return {
         ...action.payload,
         lastAction: 'jump',
       };
+    }
     case 'reset':
-      return initRotor(action.payload);
+      return initRotors(action.payload);
     default:
       throw new Error(`Invalid action type "${action.type}" in rotorReducer`);
   }
@@ -126,8 +196,22 @@ const RotorContext = React.createContext();
 RotorContext.displayName = 'Rotor Context';
 
 function RotorProvider(props) {
-  const [state, dispatch] = React.useReducer(rotorReducer, 3, initRotor);
+  const [state, dispatch] = React.useReducer(
+    rotorReducer,
+    [1, 2, 3],
+    initRotors,
+  );
   return <RotorContext.Provider value={[state, dispatch]} {...props} />;
+}
+
+function useRotorContext() {
+  const value = React.useContext(RotorContext);
+
+  if (!value) {
+    throw new Error('useRotorContext must be used inside a RotorProvider');
+  }
+
+  return value;
 }
 
 const HistoryContext = React.createContext();
@@ -149,25 +233,47 @@ function StateHistoryProvider(props) {
   );
 }
 
-function RotorDisplay() {
-  const [{position, rotorType}, dispatch] = React.useContext(RotorContext);
+function useHistoryContext() {
+  const value = React.useContext(HistoryContext);
+
+  if (!value) {
+    throw new Error(
+      'useHistoryContext must be used inside a StateHistoryProvider',
+    );
+  }
+
+  return value;
+}
+
+function RotorBox({setup}) {
+  const [{rotors}, dispatch] = useRotorContext();
+
+  React.useEffect(() => {
+    dispatch({type: 'setup', payload: setup});
+  }, [dispatch, setup]);
+
+  return rotors.map(({rotorType, position, key}) => (
+    <Rotor key={key} type={rotorType} position={position} />
+  ));
+}
+
+function Rotor({type, position}) {
+  const [, dispatch] = useRotorContext();
 
   function handlePositionChange(e) {
-    const currentValue = +e.target.value;
-    dispatch({type: 'position', payload: currentValue});
+    const currentPosition = +e.target.value;
+    dispatch({type: 'position', payload: {type, position: currentPosition}});
   }
 
   return (
-    <div id={`rotor-${rotorType}`} className="rotor">
-      <p>{`I am a type ${rotorType} rotor`}</p>
+    <div id={`rotor-${type}`} className="rotor">
+      <p>{`I am a type ${type} rotor`}</p>
       {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
-      <label htmlFor={`range${rotorType}`}>
-        Indicator Setting (Grundstellung)
-      </label>
+      <label htmlFor={`range${type}`}>Indicator Setting (Grundstellung)</label>
       <p>Position: {ALPHABET[position]}</p>
       <input
         type="range"
-        id={`range${rotorType}`}
+        id={`range${type}`}
         min="0"
         max="25"
         step="1"
@@ -180,8 +286,8 @@ function RotorDisplay() {
 
 function Board() {
   const [rawText, setRawText] = React.useState('');
-  const [state, dispatch] = React.useContext(RotorContext);
-  const {step, setStep, history, setHistory} = React.useContext(HistoryContext);
+  const [state, dispatch] = useRotorContext();
+  const {step, setStep, history, setHistory} = useHistoryContext();
   const {encodedText} = state;
 
   // Update the values in history with the new state every time it changes
@@ -227,7 +333,7 @@ function Board() {
 
   // Resets all state within the app and clears history
   function reset() {
-    dispatch({type: 'reset', payload: 3});
+    dispatch({type: 'reset', payload: [1, 2, 3]});
     setStep(-1);
     setHistory([]);
     setRawText('');
@@ -245,7 +351,7 @@ function Board() {
   }
 
   return (
-    <div>
+    <div style={{display: 'flex', flexDirection: 'column', gap: '1em'}}>
       <input value={encodedText} readOnly />
       <Keyboard text={rawText} onChange={handleInputChange} />
       <button type="button" onClick={reset}>
@@ -269,7 +375,7 @@ function App() {
     <div className="App">
       <RotorProvider>
         <StateHistoryProvider>
-          <RotorDisplay />
+          <RotorBox setup={[4, 5, 1]} />
           <Board />
         </StateHistoryProvider>
       </RotorProvider>
