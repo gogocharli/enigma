@@ -1,4 +1,5 @@
 import * as React from 'react';
+import PropTypes from 'prop-types';
 import './App.css';
 
 const ALPHABET = [
@@ -80,7 +81,7 @@ function encodeChar(char, rotors) {
   // Encode the character through each one of them
   const cipherText = currentCiphers.reduce(function encode(
     currentChar,
-    cipher,
+    cipher
   ) {
     const newChar = cipher[ALPHABET.indexOf(currentChar)];
 
@@ -199,7 +200,7 @@ function RotorProvider(props) {
   const [state, dispatch] = React.useReducer(
     rotorReducer,
     [1, 2, 3],
-    initRotors,
+    initRotors
   );
   return <RotorContext.Provider value={[state, dispatch]} {...props} />;
 }
@@ -222,7 +223,7 @@ function StateHistoryProvider(props) {
   const [history, setHistory] = useLocalStorage(
     '__enigma-history__',
     [],
-    false,
+    false
   );
 
   return (
@@ -238,7 +239,7 @@ function useHistoryContext() {
 
   if (!value) {
     throw new Error(
-      'useHistoryContext must be used inside a StateHistoryProvider',
+      'useHistoryContext must be used inside a StateHistoryProvider'
     );
   }
 
@@ -283,6 +284,11 @@ function Rotor({type, position}) {
     </div>
   );
 }
+
+Rotor.propTypes = {
+  type: PropTypes.number.isRequired,
+  position: PropTypes.number.isRequired,
+};
 
 function Board() {
   const [rawText, setRawText] = React.useState('');
@@ -370,6 +376,11 @@ function Keyboard({text, onChange}) {
   );
 }
 
+Keyboard.propTypes = {
+  text: PropTypes.string.isRequired,
+  onChange: PropTypes.func.isRequired,
+};
+
 function App() {
   return (
     <div className="App">
@@ -389,7 +400,7 @@ function useLocalStorage(
   key,
   initalValue = '',
   persistValue = true,
-  {serialize = JSON.stringify, deserialize = JSON.parse} = {},
+  {serialize = JSON.stringify, deserialize = JSON.parse} = {}
 ) {
   const [state, setState] = React.useState(() => {
     const storedValue = window.localStorage.getItem(key);
