@@ -81,7 +81,7 @@ function encodeChar(char, rotors) {
   // Encode the character through each one of them
   const cipherText = currentCiphers.reduce(function encode(
     currentChar,
-    cipher
+    cipher,
   ) {
     const newChar = cipher[ALPHABET.indexOf(currentChar)];
 
@@ -200,7 +200,7 @@ function RotorProvider(props) {
   const [state, dispatch] = React.useReducer(
     rotorReducer,
     [1, 2, 3],
-    initRotors
+    initRotors,
   );
   return <RotorContext.Provider value={[state, dispatch]} {...props} />;
 }
@@ -219,11 +219,11 @@ const HistoryContext = React.createContext();
 HistoryContext.displayName = 'History Context';
 
 function StateHistoryProvider(props) {
-  const [step, setStep] = useLocalStorage('__enigma-step__', -1, false);
-  const [history, setHistory] = useLocalStorage(
+  const [step, setStep] = useSessionStorage('__enigma-step__', -1, false);
+  const [history, setHistory] = useSessionStorage(
     '__enigma-history__',
     [],
-    false
+    false,
   );
 
   return (
@@ -239,7 +239,7 @@ function useHistoryContext() {
 
   if (!value) {
     throw new Error(
-      'useHistoryContext must be used inside a StateHistoryProvider'
+      'useHistoryContext must be used inside a StateHistoryProvider',
     );
   }
 
@@ -396,15 +396,14 @@ function App() {
 
 export default App;
 
-function useLocalStorage(
+function useSessionStorage(
   key,
   initalValue = '',
-  persistValue = true,
-  {serialize = JSON.stringify, deserialize = JSON.parse} = {}
+  {serialize = JSON.stringify, deserialize = JSON.parse} = {},
 ) {
   const [state, setState] = React.useState(() => {
-    const storedValue = window.localStorage.getItem(key);
-    if (storedValue && persistValue) {
+    const storedValue = window.sessionStorage.getItem(key);
+    if (storedValue) {
       return deserialize(storedValue);
     }
     return typeof initalValue === 'function' ? initalValue() : initalValue;
@@ -414,11 +413,11 @@ function useLocalStorage(
   React.useEffect(() => {
     const prevKey = prevKeyRef.current;
     if (prevKey !== key) {
-      window.localStorage.removeItem(prevKey);
+      window.sessionStorage.removeItem(prevKey);
       prevKeyRef.current = key;
     }
 
-    window.localStorage.setItem(key, serialize(state));
+    window.sessionStorage.setItem(key, serialize(state));
     prevKeyRef.current = key;
   }, [key, serialize, state]);
 
