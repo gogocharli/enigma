@@ -8,7 +8,7 @@
         "no-use-before-define": "off",
         "import/no-unresolved": "off",
         "prettier/prettier": [
-          "error",
+          "warn",
           {
             "trailingComma": "all"
           }
