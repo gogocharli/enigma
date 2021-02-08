@@ -1,3 +1,4 @@
+// TODO maybe switch the alphabet to a string, most methods will be preserved and code will be terser
 const ALPHABET = [
   'A',
   'B',
@@ -55,6 +56,11 @@ const ROTORS = [
   },
 ];
 
+const REFLECTORS = new Map([
+  ['A', 'EJMZALYXVBWFCRQUONTSPIKHGD'],
+  ['B', 'YRUHQSLDPXNGOKMIEBFZCWVJAT'],
+]);
+
 /**
  * Encodes an alphabetical character to the matching cipher caracter
  * @param {string} char
@@ -65,27 +71,49 @@ function encodeChar(char, rotors) {
   const reverseRotors = [...rotors].reverse();
 
   // Get the current cipher for each rotor
-  const currentCiphers = reverseRotors.map(function extractCipher({
-    rotorType,
-    position,
-  }) {
-    let {cipher} = ROTORS[rotorType - 1];
-    cipher = cipher.slice(position) + cipher.slice(0, position);
-    return cipher;
-  });
+  const currentCiphers = reverseRotors.map(extractCipher);
 
-  // Encode the character through each one of them
-  const cipherText = currentCiphers.reduce(function encode(
-    currentChar,
-    cipher,
-  ) {
-    const newChar = cipher[ALPHABET.indexOf(currentChar)];
+  // Each character gets encoded from the rotors twice
+  const firstPassChar = alphaToCipher(char, reverseRotors, currentCiphers);
 
-    return newChar;
-  },
-  char);
+  // Get the new charcater from the reflector
+  const reflector = REFLECTORS.get('B');
+  const reflectedChar = reflector[ALPHABET.indexOf(firstPassChar)];
 
-  return cipherText;
+  // TODO Second pass through the encoding
+
+  return reflectedChar;
+}
+
+/**
+ * Encrypts the plaintext to the character to be transferred to the reflector
+ * @param {string} char the plain text character
+ * @param {{rotorType: number, position: number, turnover: number}[]} rotors
+ * @param {string[]} currentCiphers ciphers at the current rotor positions
+ */
+function alphaToCipher(char, rotors, currentCiphers) {
+  let encodedChar = char;
+  // eslint-disable-next-line no-plusplus
+  for (let i = 0; i < rotors.length; i++) {
+    const cipher = currentCiphers[i];
+    const previousRotor = rotors[i - 1];
+    const position = previousRotor?.position;
+
+    // Use the alphabet derived from the previous rotor position
+    const alphabet =
+      i === 0
+        ? ALPHABET
+        : [...ALPHABET.slice(position), ...ALPHABET.slice(0, position)];
+
+    encodedChar = cipher[alphabet.indexOf(encodedChar)];
+  }
+  return encodedChar;
+}
+
+function extractCipher({rotorType, position}) {
+  let {cipher} = ROTORS[rotorType - 1];
+  cipher = cipher.slice(position) + cipher.slice(0, position);
+  return cipher;
 }
 
 function getTurnoverIndex(rotorType) {
