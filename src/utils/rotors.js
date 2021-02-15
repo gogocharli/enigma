@@ -78,7 +78,7 @@ function encodeChar(char, rotors) {
 
   // Get the new charcater from the reflector
   const reflector = REFLECTORS.get('B');
-  const reflectedChar = reflector[ALPHABET.indexOf(firstPassChar)];
+  const reflectedChar = ALPHABET[reflector.indexOf(firstPassChar)];
 
   // TODO Second pass through the encoding
 
@@ -92,21 +92,27 @@ function encodeChar(char, rotors) {
  * @param {string[]} currentCiphers ciphers at the current rotor positions
  */
 function alphaToCipher(char, rotors, currentCiphers) {
-  let encodedChar = char;
-  // eslint-disable-next-line no-plusplus
-  for (let i = 0; i < rotors.length; i++) {
-    const cipher = currentCiphers[i];
-    const previousRotor = rotors[i - 1];
-    const position = previousRotor?.position;
+  // The current encoded character after each rotor is derived from the "alphabet"
+  // created from the previous rotor's position.
+  const encodedChar = rotors.reduce(function (
+    acc,
+    _current,
+    index,
+    rotorsList,
+  ) {
+    const cipher = currentCiphers[index];
+    const previousRotor = rotorsList[index - 1];
 
-    // Use the alphabet derived from the previous rotor position
-    const alphabet =
-      i === 0
+    // Use the alphabet from the previous rotor if there is one.
+    const position = previousRotor?.position;
+    const currentAlphabet =
+      index === 0
         ? ALPHABET
         : [...ALPHABET.slice(position), ...ALPHABET.slice(0, position)];
 
-    encodedChar = cipher[alphabet.indexOf(encodedChar)];
-  }
+    return cipher[currentAlphabet.indexOf(acc)];
+  },
+  char);
   return encodedChar;
 }
 
