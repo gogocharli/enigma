@@ -140,20 +140,32 @@ function getRotors(rotorTypes) {
     rotorType,
     position: 0,
     turnover: getTurnoverIndex(rotorType),
+    updated: false,
   }));
 
   return rotors;
 }
 
-// TODO fix bug below where the leftmost rotor keeps updating its position when triggered
+function incrementPosition(rotor) {
+  rotor.position += 1;
+  rotor.position %= 26;
+  rotor.updated = true;
+}
+
 function updateTurnover(rotor, index, rotorList) {
   // Always increment the last rotor's position
-  // Increment a rotor if the previous just incremented past their turnover position
-  const previousRotor = rotorList[index - 1];
-  if (index === 0 || previousRotor.position === previousRotor.turnover + 1) {
-    rotor.position += 1;
-    rotor.position %= 26;
+  const nextRotor = rotorList[index + 1];
+  if (index === 0) {
+    incrementPosition(rotor);
   }
+
+  // Eagerly increment next rotor when current has just been updated over its turnover
+  // This is the best way, as of now, to avoid false updates
+  if (nextRotor && rotor.updated && rotor.position === rotor.turnover + 1) {
+    incrementPosition(nextRotor);
+    rotor.updated = false;
+  }
+
   return rotor;
 }
 
