@@ -1,32 +1,5 @@
 // TODO maybe switch the alphabet to a string, most methods will be preserved and code will be terser
-const ALPHABET = [
-  'A',
-  'B',
-  'C',
-  'D',
-  'E',
-  'F',
-  'G',
-  'H',
-  'I',
-  'J',
-  'K',
-  'L',
-  'M',
-  'N',
-  'O',
-  'P',
-  'Q',
-  'R',
-  'S',
-  'T',
-  'U',
-  'V',
-  'W',
-  'X',
-  'Y',
-  'Z',
-];
+const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
 const ROTORS = [
   {
@@ -67,22 +40,25 @@ const REFLECTORS = new Map([
  * @param {{rotorType: number, position: number, turnover: number}[]} rotors
  */
 function encodeChar(char, rotors) {
-  // The encoding is done from last to first
+  // The encoding is done from last to first (RTL)
   const reverseRotors = [...rotors].reverse();
 
-  // Get the current cipher for each rotor
-  const currentCiphers = reverseRotors.map(extractCipher);
+  // Get the ciphers for the current rotor positions
+  const reversedCiphers = reverseRotors.map(extractCipher);
 
-  // Each character gets encoded from the rotors twice
-  const firstPassChar = alphaToCipher(char, reverseRotors, currentCiphers);
+  // Encoding produced from the input to the reflector
+  const firstPassChar = alphaToCipher(char, reverseRotors, reversedCiphers);
 
-  // Get the new charcater from the reflector
+  // Get the new characater from the reflector
   const reflector = REFLECTORS.get('B');
   const reflectedChar = ALPHABET[reflector.indexOf(firstPassChar)];
 
-  // TODO Second pass through the encoding
+  // This encoding is done from first to last (LTR)
+  // Get the ciphers from the original rotor position
+  const currentCiphers = rotors.map(extractCipher);
+  const encodedChar = cipherToAlpha(reflectedChar, rotors, currentCiphers);
 
-  return reflectedChar;
+  return encodedChar;
 }
 
 /**
@@ -95,8 +71,8 @@ function alphaToCipher(char, rotors, currentCiphers) {
   // The current encoded character after each rotor is derived from the "alphabet"
   // created from the previous rotor's position.
   const encodedChar = rotors.reduce(function (
-    acc,
-    _current,
+    inputChar,
+    _rotor,
     index,
     rotorsList,
   ) {
@@ -108,12 +84,42 @@ function alphaToCipher(char, rotors, currentCiphers) {
     const currentAlphabet =
       index === 0
         ? ALPHABET
-        : [...ALPHABET.slice(position), ...ALPHABET.slice(0, position)];
+        : ALPHABET.slice(position) + ALPHABET.slice(0, position);
 
-    return cipher[currentAlphabet.indexOf(acc)];
+    return cipher[currentAlphabet.indexOf(inputChar)];
   },
   char);
+
   return encodedChar;
+}
+
+/**
+ * Encrypts the plaintext to the character to be transferred to the reflector
+ * @param {string} char the plain text character
+ * @param {{rotorType: number, position: number, turnover: number}[]} rotors
+ * @param {string[]} currentCiphers ciphers at the current rotor positions
+ */
+function cipherToAlpha(char, rotors, currentCiphers) {
+  const charIndex = ALPHABET.indexOf(char);
+  // Return that character for the next rotor
+  const encodedCharIndex = rotors.reduce(function (
+    inputIndex,
+    {position},
+    current,
+  ) {
+    const cipher = currentCiphers[current];
+    const currentAlphabet =
+      ALPHABET.slice(position) + ALPHABET.slice(0, position);
+    // Which char alpha from the alphabet has the same position as the input char
+    const matchingChar = currentAlphabet[inputIndex];
+
+    // What's the index of character alpha in the cipher C of the curent form
+    const outputIndex = cipher.indexOf(matchingChar);
+    return outputIndex;
+  },
+  charIndex);
+
+  return ALPHABET[encodedCharIndex];
 }
 
 function extractCipher({rotorType, position}) {
@@ -139,6 +145,7 @@ function getRotors(rotorTypes) {
   return rotors;
 }
 
+// TODO fix bug below where the leftmost rotor keeps updating its position when triggered
 function updateTurnover(rotor, index, rotorList) {
   // Always increment the last rotor's position
   // Increment a rotor if the previous just incremented past their turnover position
@@ -152,7 +159,8 @@ function updateTurnover(rotor, index, rotorList) {
 
 function updateRotorsPositions(rotors) {
   // Reversing the array here is the fastest way to update them
-  const newRotorState = [...rotors].reverse().map(updateTurnover);
+  const reversedRotors = [...rotors].reverse();
+  const newRotorState = reversedRotors.map(updateTurnover);
   return newRotorState.reverse();
 }
 

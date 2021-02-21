@@ -29,7 +29,6 @@ function Board() {
       return;
     }
 
-    // TODO Support whitespace character — (it's actually pretty hard)
     // Disabling for now because of wonky state
     const spaceMatch = text.match(/\s$/g);
     if (spaceMatch?.length >= 1) {
