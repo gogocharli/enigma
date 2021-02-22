@@ -1,4 +1,3 @@
-// TODO maybe switch the alphabet to a string, most methods will be preserved and code will be terser
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
 const ROTORS = [
@@ -73,18 +72,18 @@ function alphaToCipher(char, rotors, currentCiphers) {
   const encodedChar = rotors.reduce(function (
     inputChar,
     _rotor,
-    index,
+    current,
     rotorsList,
   ) {
-    const cipher = currentCiphers[index];
-    const previousRotor = rotorsList[index - 1];
+    const cipher = currentCiphers[current];
+    const previousRotor = rotorsList[current - 1];
 
     // Use the alphabet from the previous rotor if there is one.
     const position = previousRotor?.position;
-    const currentAlphabet =
-      index === 0
-        ? ALPHABET
-        : ALPHABET.slice(position) + ALPHABET.slice(0, position);
+    const isFirstRotor = current === 0;
+    const currentAlphabet = isFirstRotor
+      ? ALPHABET
+      : ALPHABET.slice(position) + ALPHABET.slice(0, position);
 
     return cipher[currentAlphabet.indexOf(inputChar)];
   },
@@ -101,15 +100,20 @@ function alphaToCipher(char, rotors, currentCiphers) {
  */
 function cipherToAlpha(char, rotors, currentCiphers) {
   const charIndex = ALPHABET.indexOf(char);
-  // Return that character for the next rotor
+
   const encodedCharIndex = rotors.reduce(function (
     inputIndex,
     {position},
     current,
   ) {
     const cipher = currentCiphers[current];
-    const currentAlphabet =
-      ALPHABET.slice(position) + ALPHABET.slice(0, position);
+
+    // The first rotor and the reflector align with the first alphabet
+    const isFirstRotor = current === 0;
+    const currentAlphabet = isFirstRotor
+      ? ALPHABET
+      : ALPHABET.slice(position) + ALPHABET.slice(0, position);
+
     // Which char alpha from the alphabet has the same position as the input char
     const matchingChar = currentAlphabet[inputIndex];
 

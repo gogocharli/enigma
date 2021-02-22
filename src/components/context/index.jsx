@@ -20,39 +20,40 @@ function rotorReducer(state, action) {
     case 'setup': {
       // Choose rotors
       const {payload: rotorTypes} = action;
-      const rotors = getRotors(rotorTypes);
       return {
         ...state,
-        rotors,
+        rotors: getRotors(rotorTypes),
         lastAction: 'setup',
       };
     }
     case 'position': {
       // Set position of a rotor
       const {type, position: newPosition} = action.payload;
-      const {rotors} = state;
-      const rotor = rotors.find(({rotorType}) => rotorType === type);
-      const rotorIndex = rotors.indexOf(rotor);
-      rotors[rotorIndex].position = newPosition;
+      const {rotors: previousRotors} = state;
+      const rotor = previousRotors.find(({rotorType}) => rotorType === type);
+      const rotorIndex = previousRotors.indexOf(rotor);
+
+      const updatedRotors = [...previousRotors];
+      updatedRotors[rotorIndex].position = newPosition;
 
       return {
         ...state,
-        rotors,
+        rotors: updatedRotors,
         lastAction: 'position',
       };
     }
     case 'encode': {
       // Transform plainText into encodedText
-      let {rotors, encodedText} = state;
+      const {rotors: previousRotors, encodedText} = state;
 
       // When a key is pressed, the rotor moves position before encoding
-      rotors = updateRotorsPositions(rotors);
+      const updatedRotors = updateRotorsPositions(previousRotors);
 
       // Get the corresponding character from the cypher
       const {plainText, updateChar} = action.payload;
-      const newCipherChar = encodeChar(updateChar, rotors);
+      const newCipherChar = encodeChar(updateChar, updatedRotors);
       return {
-        rotors,
+        rotors: updatedRotors,
         plainText,
         encodedText: encodedText + newCipherChar,
         lastAction: 'encode',
