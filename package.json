@@ -1,5 +1,6 @@
 {
   "private": true,
+  "license": "ISC",
   "scripts": {
     "start": "snowpack dev",
     "build": "snowpack build",
