@@ -34,6 +34,7 @@ function rotorReducer(state, action) {
       const rotor = previousRotors.find(({rotorType}) => rotorType === type);
       const rotorIndex = previousRotors.indexOf(rotor);
 
+      // Create a new object to avoid mutating the history state
       const rotorToUpdate = {...previousRotors[rotorIndex]};
       rotorToUpdate.position = newPosition;
       const updatedRotors = [...previousRotors];
