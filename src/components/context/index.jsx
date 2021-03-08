@@ -21,7 +21,8 @@ function rotorReducer(state, action) {
       // Choose rotors
       const {payload: rotorTypes} = action;
       return {
-        ...state,
+        plainText: '',
+        encodedText: '',
         rotors: getRotors(rotorTypes),
         lastAction: 'setup',
       };
@@ -33,8 +34,10 @@ function rotorReducer(state, action) {
       const rotor = previousRotors.find(({rotorType}) => rotorType === type);
       const rotorIndex = previousRotors.indexOf(rotor);
 
+      const rotorToUpdate = {...previousRotors[rotorIndex]};
+      rotorToUpdate.position = newPosition;
       const updatedRotors = [...previousRotors];
-      updatedRotors[rotorIndex].position = newPosition;
+      updatedRotors[rotorIndex] = rotorToUpdate;
 
       return {
         ...state,

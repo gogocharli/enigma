@@ -75,7 +75,7 @@ function Board() {
         Reset
       </button>
       <button type="button" onClick={previous}>
-        Go Back
+        Undo
       </button>
     </div>
   );

@@ -211,10 +211,11 @@ function updateTurnover(rotor, index, rotorList) {
  * @param {Rotor[]} rotors
  */
 function updateRotorsPositions(rotors) {
-  // Reversing the array here is the fastest way to update them
-  const reversedRotors = [...rotors].reverse();
-  const newRotorState = reversedRotors.map(updateTurnover);
-  return newRotorState.reverse();
+  // Reversing the rotors in both places is the fastest way to update them
+  // Avoid mutating the original rotors by cloning the objects
+  const newRotors = rotors.map((rotor) => ({...rotor})).reverse();
+  const newRotorState = newRotors.map(updateTurnover).reverse();
+  return newRotorState;
 }
 
 export {ALPHABET, ROTORS, encodeChar, getRotors, updateRotorsPositions};
