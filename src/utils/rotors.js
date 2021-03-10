@@ -1,6 +1,7 @@
 /**
  * A Rotor
  * @typedef {Object} Rotor
+ * @property {string} key
  * @property {number} rotorType
  * @property {number} position
  * @property {string} turnover

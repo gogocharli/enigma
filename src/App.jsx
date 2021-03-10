@@ -10,7 +10,7 @@ function App() {
     <div className="App">
       <RotorProvider>
         <StateHistoryProvider>
-          <RotorBox setup={[1, 2, 3]} />
+          <RotorBox />
           <Board />
         </StateHistoryProvider>
       </RotorProvider>
