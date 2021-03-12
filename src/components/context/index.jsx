@@ -21,9 +21,9 @@ function rotorReducer(state, action) {
       // Choose rotors
       const {payload: rotorTypes} = action;
       return {
+        rotors: getRotors(rotorTypes),
         plainText: '',
         encodedText: '',
-        rotors: getRotors(rotorTypes),
         lastAction: 'setup',
       };
     }

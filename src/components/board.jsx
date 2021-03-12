@@ -18,6 +18,13 @@ function Board() {
     setHistory((prevState) => [...prevState, currentState]);
   }, [setHistory, setStep, state]);
 
+  // Keep the raw and encoded text in sync
+  React.useEffect(() => {
+    if (encodedText.length === 0) {
+      setRawText('');
+    }
+  }, [encodedText]);
+
   function handleInputChange(e) {
     e.preventDefault();
     const text = e.target.value;
@@ -53,7 +60,6 @@ function Board() {
     dispatch({type: 'reset', payload: [1, 2, 3]});
     setStep(-1);
     setHistory([]);
-    setRawText('');
   }
 
   // Goes back to previous state
