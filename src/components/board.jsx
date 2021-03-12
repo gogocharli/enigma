@@ -75,7 +75,7 @@ function Board() {
 
   return (
     <div style={{display: 'flex', flexDirection: 'column', gap: '1em'}}>
-      <input value={encodedText} readOnly />
+      <TextOutput text={encodedText} />
       <Keyboard text={rawText} onChange={handleInputChange} />
       <button type="button" onClick={reset}>
         Reset
@@ -96,6 +96,14 @@ function Keyboard({text, onChange}) {
 Keyboard.propTypes = {
   text: PropTypes.string.isRequired,
   onChange: PropTypes.func.isRequired,
+};
+
+function TextOutput({text}) {
+  return <input value={text} readOnly />;
+}
+
+TextOutput.propTypes = {
+  text: PropTypes.string.isRequired,
 };
 
 export {Board};
