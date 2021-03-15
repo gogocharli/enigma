@@ -35,32 +35,36 @@ const REFLECTORS = new Map([
   ['B', 'YRUHQSLDPXNGOKMIEBFZCWVJAT'],
 ]);
 
-/**
- * Encodes an alphabetical character to the matching cipher caracter
- * @param {string} char
- * @param {Rotor[]} rotors
- */
-function encodeChar(char, rotors) {
-  // The encoding is done from last to first (RTL)
-  const reverseRotors = [...rotors].reverse();
+const initReflector = (reflectorType) => {
+  /**
+   * Encodes an alphabetical character to the matching cipher caracter
+   * @param {string} char
+   * @param {Rotor[]} rotors
+   */
+  function encodeChar(char, rotors) {
+    // The encoding is done from last to first (RTL)
+    const reverseRotors = [...rotors].reverse();
 
-  // Get the ciphers for the current rotor positions
-  const reversedCiphers = reverseRotors.map(extractCipher);
+    // Get the ciphers for the current rotor positions
+    const reversedCiphers = reverseRotors.map(extractCipher);
 
-  // Encoding produced from the input to the reflector
-  const firstPassChar = alphaToCipher(char, reverseRotors, reversedCiphers);
+    // Encoding produced from the input to the reflector
+    const firstPassChar = alphaToCipher(char, reverseRotors, reversedCiphers);
 
-  // Get the new characater from the reflector
-  const reflector = REFLECTORS.get('B');
-  const reflectedChar = ALPHABET[reflector.indexOf(firstPassChar)];
+    // Get the new characater from the reflector
+    const reflector = REFLECTORS.get(reflectorType);
+    const reflectedChar = ALPHABET[reflector.indexOf(firstPassChar)];
 
-  // This encoding is done from first to last (LTR)
-  // Get the ciphers from the original rotor position
-  const currentCiphers = rotors.map(extractCipher);
-  const encodedChar = cipherToAlpha(reflectedChar, rotors, currentCiphers);
+    // This encoding is done from first to last (LTR)
+    // Get the ciphers from the original rotor position
+    const currentCiphers = rotors.map(extractCipher);
+    const encodedChar = cipherToAlpha(reflectedChar, rotors, currentCiphers);
 
-  return encodedChar;
-}
+    return encodedChar;
+  }
+
+  return encodeChar;
+};
 
 /**
  * Encrypts the plaintext to the character to be transferred to the reflector
@@ -211,4 +215,4 @@ function updateRotorsPositions(rotors) {
   return newRotorState;
 }
 
-export {ALPHABET, ROTORS, encodeChar, getRotors, updateRotorsPositions};
+export {ALPHABET, ROTORS, initReflector, getRotors, updateRotorsPositions};

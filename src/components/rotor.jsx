@@ -8,6 +8,7 @@ const rotorTypes = ['I', 'II', 'III', 'IV', 'V'];
 function RotorBox() {
   const [{rotors}, dispatch] = useRotorContext();
   const [types, setTypes] = React.useState([1, 2, 3]);
+  const [reflector, setReflector] = React.useState('A');
 
   function handleSelectionCHange(currentType) {
     return function changeTypes(e) {
@@ -30,8 +31,9 @@ function RotorBox() {
   }
 
   React.useEffect(() => {
-    dispatch({type: 'setup', payload: types});
-  }, [dispatch, types]);
+    const payload = {types, reflector};
+    dispatch({type: 'setup', payload});
+  }, [dispatch, types, reflector]);
 
   return rotors.map(({rotorType, position, key}) => (
     <Rotor
