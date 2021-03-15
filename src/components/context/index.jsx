@@ -1,81 +1,22 @@
+/*
+|--------------------------------------------------------------------------
+| Track the context values for the current application state and it's history
+|--------------------------------------------------------------------------
+|
+| The Rotor Provider is responsible for storing and passing data from the
+| logic concerning the rotors to the rest of the components.
+|
+| The History Provider acts as a middleman between other providers to track
+| changes made to the state over time. This allows us to do undo and redo
+| operations. A feat not possible with the original Enigma machine.
+*/
+
 import * as React from 'react';
 import {useSessionStorage} from '../../utils/hooks';
-import {getRotors, updateRotorsPositions, encodeChar} from '../../utils/rotors';
+import {rotorReducer, initRotors} from './reducer';
 
 const RotorContext = React.createContext();
 RotorContext.displayName = 'Rotor Context';
-
-function initRotors(initialTypes) {
-  const rotors = getRotors(initialTypes);
-  return {
-    rotors,
-    plainText: '',
-    encodedText: '',
-    lastAction: 'init',
-  };
-}
-
-function rotorReducer(state, action) {
-  switch (action.type) {
-    case 'setup': {
-      // Choose rotors
-      const {payload: rotorTypes} = action;
-      return {
-        rotors: getRotors(rotorTypes),
-        plainText: '',
-        encodedText: '',
-        lastAction: 'setup',
-      };
-    }
-    case 'position': {
-      // Set position of a rotor
-      const {type, position: newPosition} = action.payload;
-      const {rotors: previousRotors} = state;
-      const rotor = previousRotors.find(({rotorType}) => rotorType === type);
-      const rotorIndex = previousRotors.indexOf(rotor);
-
-      // Create a new object to avoid mutating the history state
-      const rotorToUpdate = {...previousRotors[rotorIndex]};
-      rotorToUpdate.position = newPosition;
-      const updatedRotors = [...previousRotors];
-      updatedRotors[rotorIndex] = rotorToUpdate;
-
-      return {
-        ...state,
-        rotors: updatedRotors,
-        lastAction: 'position',
-      };
-    }
-    case 'encode': {
-      // Transform plainText into encodedText
-      const {rotors: previousRotors, encodedText} = state;
-
-      // When a key is pressed, the rotor moves position before encoding
-      const updatedRotors = updateRotorsPositions(previousRotors);
-
-      // Get the corresponding character from the cypher
-      const {plainText, updateChar} = action.payload;
-      const newCipherChar = encodeChar(updateChar, updatedRotors);
-      return {
-        rotors: updatedRotors,
-        plainText,
-        encodedText: encodedText + newCipherChar,
-        lastAction: 'encode',
-      };
-    }
-    case 'jump': {
-      // Go back to a previous state
-      return {
-        ...action.payload,
-        lastAction: 'jump',
-      };
-    }
-    case 'reset':
-      return initRotors(action.payload);
-    default:
-      throw new Error(`Invalid action type "${action.type}" in rotorReducer`);
-  }
-}
 
 function RotorProvider(props) {
   const [state, dispatch] = React.useReducer(

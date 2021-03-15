@@ -1,12 +1,4 @@
-/**
- * A Rotor
- * @typedef {Object} Rotor
- * @property {string} key
- * @property {number} rotorType
- * @property {number} position
- * @property {string} turnover
- * @property {boolean} updated - if the rotor's postion was just updated
- */
+import '../typedef';
 
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
