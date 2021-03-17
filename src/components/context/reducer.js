@@ -23,7 +23,7 @@ import {
  * Returns new rotor state from a specified action type
  * @param {RotorState} state
  * @param {Action} action
- * @returns {RotorState} state
+ * @returns {RotorState} new state
  */
 function rotorReducer(state, action) {
   switch (action.type) {
@@ -100,7 +100,7 @@ function initRotors(initialTypes) {
   const rotors = getRotors(initialTypes);
   return {
     rotors,
-    reflector: 'B',
+    reflector: '',
     plainText: '',
     encodedText: '',
     lastAction: 'init',

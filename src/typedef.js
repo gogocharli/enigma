@@ -14,10 +14,14 @@
  */
 
 /**
+ * @typedef {'A' | 'B' | 'B-thin' | 'Beta' | 'C' | 'C-thin' | 'ETW' | 'Gamma' } Reflector
+ */
+
+/**
  * Application state
  * @typedef {Object} RotorState
  * @property {Rotor[]} rotors
- * @property {'A' | 'B'} reflector
+ * @property {Reflector} reflector
  * @property {string} plainText
  * @property {string} encodedText
  * @property {Action} lastAction

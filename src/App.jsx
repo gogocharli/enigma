@@ -1,6 +1,6 @@
 import * as React from 'react';
 import {RotorProvider, StateHistoryProvider} from './components/context/index';
-import {RotorBox} from './components/rotor';
+import {RotorBox} from './components/rotors/index';
 import {Board} from './components/board';
 
 import './App.css';
