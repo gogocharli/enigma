@@ -2,6 +2,7 @@
   text-align: center;
   display: grid;
   place-items: center;
+  padding-top: 20vh;
   gap: 2rem;
 }
 .App code {
