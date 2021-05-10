@@ -41,6 +41,10 @@ const REFLECTORS = new Map([
   ['Gamma', 'FSOKANUERHMBTIYCWLQPZXVGJD'],
 ]);
 
+/**
+ * Initialize the reflector settings used for character encoding
+ * @param {Reflector} reflectorType
+ */
 const initReflector = (reflectorType) => {
   /**
    * Encodes an alphabetical character to the matching cipher caracter
