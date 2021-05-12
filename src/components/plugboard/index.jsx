@@ -24,18 +24,15 @@ export function PlugBoard() {
     const isChecked = Boolean(sibling) && ALPHABET.includes(sibling);
     if (isChecked) {
       setConnections(
-        (c) =>
-          new Map(
-            [...c].map((letterMatch) => {
-              let [currentLetter, currentMatch] = letterMatch;
+        createNewMap((letterMatch) => {
+          let [currentLetter, currentMatch] = letterMatch;
 
-              // Remove the two letters as siblings
-              if (currentLetter === letter) currentMatch = null;
-              if (currentLetter === sibling) currentMatch = null;
+          // Remove the two letters as siblings
+          if (currentLetter === letter) currentMatch = null;
+          if (currentLetter === sibling) currentMatch = null;
 
-              return [currentLetter, currentMatch];
-            }),
-          ),
+          return [currentLetter, currentMatch];
+        }),
       );
       return;
     }
@@ -47,31 +44,25 @@ export function PlugBoard() {
     // Close the connection if another pending state exists
     if (sibling) {
       setConnections(
-        (c) =>
-          new Map(
-            [...c].map((letterMatch) => {
-              let [currentLetter, currentMatch] = letterMatch;
+        createNewMap((letterMatch) => {
+          let [currentLetter, currentMatch] = letterMatch;
 
-              // Assing the two letters as each other siblings
-              if (currentLetter === letter) currentMatch = sibling;
-              if (currentLetter === sibling) currentMatch = letter;
+          // Assing the two letters as each other siblings
+          if (currentLetter === letter) currentMatch = sibling;
+          if (currentLetter === sibling) currentMatch = letter;
 
-              return [currentLetter, currentMatch];
-            }),
-          ),
+          return [currentLetter, currentMatch];
+        }),
       );
       return;
     }
 
     // If no pending state, assing the current one to pending
     setConnections(
-      (c) =>
-        new Map(
-          [...c].map((l) => {
-            if (l[0] === letter) l[1] = PENDING;
-            return l;
-          }),
-        ),
+      createNewMap((l) => {
+        if (l[0] === letter) l[1] = PENDING;
+        return l;
+      }),
     );
   }
 
@@ -89,6 +80,10 @@ export function PlugBoard() {
   );
 }
 
+/**
+ * Creates a new
+ * @param {string} siblingVal
+ */
 function getStatus(siblingVal) {
   switch (siblingVal) {
     case null:
@@ -102,3 +97,8 @@ function getStatus(siblingVal) {
       return CHECKED;
   }
 }
+
+/** Apply callback function to each element of 
+the previous map and returns a new one */
+const createNewMap = (callbackFn) => (previousMap) =>
+  new Map([...previousMap].map(callbackFn));
