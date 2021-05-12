@@ -100,7 +100,7 @@ function initRotors(initialTypes) {
   const rotors = getRotors(initialTypes);
   return {
     rotors,
-    reflector: '',
+    reflector: 'B-thin',
     plainText: '',
     encodedText: '',
     lastAction: 'init',
