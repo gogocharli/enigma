@@ -12,65 +12,31 @@
 */
 
 import * as React from 'react';
-import {useSessionStorage} from '../../utils/hooks';
-import {rotorReducer, initRotors} from './reducer';
+import PropTypes from 'prop-types';
 
-const RotorContext = React.createContext();
-RotorContext.displayName = 'Rotor Context';
+import {RotorProvider} from './rotor-context';
+import {StateHistoryProvider} from './history-context';
+import {PlugboardProvider} from './plugboard-context';
 
-function RotorProvider(props) {
-  const [state, dispatch] = React.useReducer(
-    rotorReducer,
-    [1, 2, 3],
-    initRotors,
-  );
-  return <RotorContext.Provider value={[state, dispatch]} {...props} />;
-}
-
-function useRotorContext() {
-  const value = React.useContext(RotorContext);
-
-  if (!value) {
-    throw new Error('useRotorContext must be used inside a RotorProvider');
-  }
-
-  return value;
-}
-
-const HistoryContext = React.createContext();
-HistoryContext.displayName = 'History Context';
-
-function StateHistoryProvider(props) {
-  const [step, setStep] = useSessionStorage('__enigma-step__', -1, false);
-  const [history, setHistory] = useSessionStorage(
-    '__enigma-history__',
-    [],
-    false,
-  );
-
+/**
+ * Unique provider dispatching all context providers from the app
+ * @param {{children: React.ReactNode}} props
+ */
+function AppProviders({children}) {
   return (
-    <HistoryContext.Provider
-      value={{step, setStep, history, setHistory}}
-      {...props}
-    />
+    <RotorProvider>
+      <StateHistoryProvider>
+        <PlugboardProvider>{children}</PlugboardProvider>
+      </StateHistoryProvider>
+    </RotorProvider>
   );
 }
 
-function useHistoryContext() {
-  const value = React.useContext(HistoryContext);
-
-  if (!value) {
-    throw new Error(
-      'useHistoryContext must be used inside a StateHistoryProvider',
-    );
-  }
-
-  return value;
-}
-
-export {
-  RotorProvider,
-  StateHistoryProvider,
-  useRotorContext,
-  useHistoryContext,
+AppProviders.propTypes = {
+  children: PropTypes.node.isRequired,
 };
+
+export {AppProviders};
+export {useRotorContext} from './rotor-context';
+export {useHistoryContext} from './history-context';
+export {usePlugboardContext} from './plugboard-context';
