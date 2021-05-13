@@ -19,6 +19,9 @@ export function PlugBoard() {
     const letter = e.target.id;
     let sibling = null;
 
+    // Make sure a letter doesn't match itself
+    if (connections.get(letter) === PENDING) return;
+
     // Remove the connection if it existed before
     sibling = connections.get(letter);
     const isChecked = Boolean(sibling) && ALPHABET.includes(sibling);
