@@ -16,57 +16,31 @@ export function PlugBoard() {
 
   function handleConnectionChange(e) {
     e.preventDefault();
-    const letter = e.target.id;
-    let sibling = null;
+    const currentPlug = e.target.id;
+    let match = null;
 
-    // Make sure a letter doesn't match itself
-    if (connections.get(letter) === PENDING) return;
+    match = connections.get(currentPlug);
+    const isChecked = Boolean(match) && ALPHABET.includes(match);
 
     // Remove the connection if it existed before
-    sibling = connections.get(letter);
-    const isChecked = Boolean(sibling) && ALPHABET.includes(sibling);
-    if (isChecked) {
-      setConnections(
-        createNewMap((letterMatch) => {
-          let [currentLetter, currentMatch] = letterMatch;
-
-          // Remove the two letters as siblings
-          if (currentLetter === letter) currentMatch = null;
-          if (currentLetter === sibling) currentMatch = null;
-
-          return [currentLetter, currentMatch];
-        }),
-      );
+    // Remove the pending state if the current target is already pending
+    if (match === PENDING || isChecked) {
+      removeConnection(setConnections, currentPlug, match);
       return;
     }
 
     // Check if any other connection is pending
-    [sibling] =
+    [match] =
       Array.from(connections).find(([, status]) => status === PENDING) ?? [];
 
-    // Close the connection if another pending state exists
-    if (sibling) {
-      setConnections(
-        createNewMap((letterMatch) => {
-          let [currentLetter, currentMatch] = letterMatch;
-
-          // Assing the two letters as each other siblings
-          if (currentLetter === letter) currentMatch = sibling;
-          if (currentLetter === sibling) currentMatch = letter;
-
-          return [currentLetter, currentMatch];
-        }),
-      );
+    // Make the connection if another pending state exists
+    if (match) {
+      makeConnection(setConnections, currentPlug, match);
       return;
     }
 
     // If no pending state, assing the current one to pending
-    setConnections(
-      createNewMap((l) => {
-        if (l[0] === letter) l[1] = PENDING;
-        return l;
-      }),
-    );
+    initConnection(setConnections, currentPlug);
   }
 
   return (
@@ -84,11 +58,64 @@ export function PlugBoard() {
 }
 
 /**
- * Creates a new
- * @param {string} siblingVal
+ * Open a new connection by setting the plug state as PENDING
+ * @param {Function} setConnections Dispatch Function
+ * @param {string} plug the plug to initialize
  */
-function getStatus(siblingVal) {
-  switch (siblingVal) {
+function initConnection(setConnections, plug) {
+  setConnections(
+    createNewMap((l) => {
+      if (l[0] === plug) l[1] = PENDING;
+      return l;
+    }),
+  );
+}
+
+/**
+ * Close the previous open connection from its PENDING state
+ * @param {Function} setConnections Dispatch Function
+ * @param {string} plug the plug to close the connection
+ * @param {string} match the matching plug
+ */
+function makeConnection(setConnections, plug, match) {
+  setConnections(
+    createNewMap((tuple) => {
+      let [currentPlug, currentMatch] = tuple;
+
+      if (currentPlug === plug) currentMatch = match;
+      if (currentPlug === match) currentMatch = plug;
+
+      return [currentPlug, currentMatch];
+    }),
+  );
+}
+
+/**
+ * Remove the connection between the plug and its match
+ * or the current PENDING state if no match
+ * @param {Function} setConnections Dispatch Function
+ * @param {string} plug
+ * @param {string | null} match
+ */
+function removeConnection(setConnections, plug, match) {
+  setConnections(
+    createNewMap((tuple) => {
+      let [currentPlug, currentMatch] = tuple;
+
+      if (currentPlug === plug) currentMatch = null;
+      if (currentPlug === match) currentMatch = null;
+
+      return [currentPlug, currentMatch];
+    }),
+  );
+}
+
+/**
+ * Creates a new
+ * @param {string | null} matchVal
+ */
+function getStatus(matchVal) {
+  switch (matchVal) {
     case null:
       // Empty string, the input is unchecked
       return UNCHECKED;
