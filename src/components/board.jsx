@@ -20,10 +20,17 @@ function Board() {
 
   // Update the values in history with the new state every time it changes
   React.useEffect(() => {
-    // We are not storing the new state when jumping to another
+    // When undoing, simply return to the previous version of the h
     if (state.lastAction === 'jump') return;
 
     const currentState = {...state};
+
+    // Clean previous state in the board when reinitializing
+    if (state.lastAction === 'setup') {
+      setStep(0);
+      setHistory([currentState]);
+      return;
+    }
     setStep((prevStep) => prevStep + 1);
     setHistory((prevState) => [...prevState, currentState]);
   }, [setHistory, setStep, state]);
@@ -81,8 +88,11 @@ function Board() {
     if (previousStep >= 0) {
       // Jump to previous state, update the history pointer, and remove last character
       dispatch({type: 'jump', payload: history[previousStep]});
-      setStep((prevStep) => prevStep - 1);
+
       setRawText((prevText) => prevText.slice(0, -1));
+
+      setStep((prevStep) => prevStep - 1);
+      setHistory((prevState) => prevState.slice(0, -1));
     }
   }
 

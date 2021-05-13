@@ -23,6 +23,10 @@ function useSessionStorage(
 
     window.sessionStorage.setItem(key, serialize(state));
     prevKeyRef.current = key;
+
+    return () => {
+      window.sessionStorage.clear();
+    };
   }, [key, serialize, state]);
 
   return [state, setState];

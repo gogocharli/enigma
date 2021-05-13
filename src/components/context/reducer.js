@@ -85,7 +85,7 @@ function rotorReducer(state, action) {
       };
     }
     case 'reset':
-      return initRotors(action.payload);
+      return initRotors(action.payload, 'setup');
     default:
       throw new Error(`Invalid action type "${action.type}" in rotorReducer`);
   }
@@ -96,14 +96,14 @@ function rotorReducer(state, action) {
  * @param {Rotor[]} initialTypes
  * @returns {RotorState}
  */
-function initRotors(initialTypes) {
+function initRotors(initialTypes, lastAction = 'init') {
   const rotors = getRotors(initialTypes);
   return {
     rotors,
     reflector: 'B-thin',
     plainText: '',
     encodedText: '',
-    lastAction: 'init',
+    lastAction,
   };
 }
 
