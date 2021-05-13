@@ -1,5 +1,6 @@
-import React, {useState} from 'react';
+import React from 'react';
 import {ALPHABET} from '../../utils/rotors';
+import {usePlugboardContext} from '../context/index';
 import {CHECKED, INDETERMINATE, UNCHECKED, PENDING} from './state';
 import {Plug} from './plug';
 
@@ -10,9 +11,7 @@ const plugOptions = ALPHABET.split('');
  * @see https://en.wikipedia.org/wiki/Enigma_machine#Plugboard
  */
 export function PlugBoard() {
-  const [connections, setConnections] = useState(
-    () => new Map(plugOptions.map((el) => [el, null])),
-  );
+  const [connections, setConnections] = usePlugboardContext();
 
   function handleConnectionChange(e) {
     e.preventDefault();

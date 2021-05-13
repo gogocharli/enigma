@@ -1,12 +1,22 @@
 import * as React from 'react';
 import PropTypes from 'prop-types';
-import {useRotorContext, useHistoryContext} from './context/index';
+import {ALPHABET} from '../utils/rotors';
+import {
+  useRotorContext,
+  useHistoryContext,
+  usePlugboardContext,
+} from './context/index';
 
 function Board() {
   const [rawText, setRawText] = React.useState('');
   const [state, dispatch] = useRotorContext();
   const {step, setStep, history, setHistory} = useHistoryContext();
-  const {encodedText} = state;
+  const [connections] = usePlugboardContext();
+
+  // Swap the letter with its associated match if it exists
+  const encodedText = state.encodedText
+    ? encodeThroughPlugboard(connections, state.encodedText)
+    : '';
 
   // Update the values in history with the new state every time it changes
   React.useEffect(() => {
@@ -51,7 +61,10 @@ function Board() {
     setRawText(text);
     dispatch({
       type: 'encode',
-      payload: {plainText: text, updateChar: lastUpdatedChar},
+      payload: {
+        plainText: encodeThroughPlugboard(connections, text.toUpperCase()),
+        updateChar: lastUpdatedChar,
+      },
     });
   }
 
@@ -105,5 +118,29 @@ function TextOutput({text}) {
 TextOutput.propTypes = {
   text: PropTypes.string.isRequired,
 };
+
+/**
+ * Replace a letter with its current plugboard match
+ * @param {} connections
+ * @param {string} text
+ * @returns {string}
+ */
+function encodeThroughPlugboard(connections, text) {
+  if (text.length === 0) return '';
+
+  const matchedLetters = [...connections]
+    .filter(([, match]) => match && ALPHABET.includes(match))
+    .reduce((acc, [plug, match]) => {
+      acc[plug] = match;
+      return acc;
+    }, {});
+
+  const newText = text
+    .split('')
+    .map((letter) => matchedLetters[letter] ?? letter)
+    .join('');
+
+  return newText;
+}
 
 export {Board};
