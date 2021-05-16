@@ -11,6 +11,9 @@ function PlugboardProvider(props) {
   return <PlugboardContext.Provider value={[state, setState]} {...props} />;
 }
 
+/**
+ * @returns {[Connections, React.Dispatch<React.SetStateAction<Connections>>]}
+ */
 function usePlugboardContext() {
   const value = React.useContext(PlugboardContext);
 

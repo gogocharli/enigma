@@ -20,6 +20,10 @@ function StateHistoryProvider(props) {
   );
 }
 
+/**
+ * Provides the rotor's stete history stored in session storage
+ * @returns {RotorStateCache}
+ */
 function useHistoryContext() {
   const value = React.useContext(HistoryContext);
 

@@ -13,6 +13,10 @@ function RotorProvider(props) {
   return <RotorContext.Provider value={[state, dispatch]} {...props} />;
 }
 
+/**
+ * Broadcasts the state of the rotor elements throughout the app
+ * @returns {[RotorState, React.DispatchWithoutAction]}
+ */
 function useRotorContext() {
   const value = React.useContext(RotorContext);
 

@@ -13,9 +13,12 @@ const plugOptions = ALPHABET.split('');
 export function PlugBoard() {
   const [connections, setConnections] = usePlugboardContext();
 
-  function handleConnectionChange(e) {
-    e.preventDefault();
-    const currentPlug = e.target.id;
+  /**
+   * @param {InputEvent} event
+   */
+  function handleConnectionChange(event) {
+    event.preventDefault();
+    const currentPlug = event.target.id;
     let match = null;
 
     match = connections.get(currentPlug);
