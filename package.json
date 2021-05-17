@@ -17,6 +17,7 @@
     "@snowpack/plugin-dotenv": "^2.0.5",
     "@snowpack/plugin-react-refresh": "^2.3.9",
     "@testing-library/react": "^11.0.0",
+    "@testing-library/user-event": "^13.1.9",
     "babel-eslint": "^10.1.0",
     "chai": "^4.2.0",
     "eslint": "^7.19.0",
