@@ -4,7 +4,7 @@
   "scripts": {
     "start": "snowpack dev",
     "build": "snowpack build",
-    "test": "jest \"src/**/*.test.jsx\"",
+    "test": "jest",
     "format": "prettier --write \"src/**/*.{js,jsx}\"",
     "lint": "prettier --check \"src/**/*.{js,jsx}\""
   },
@@ -14,12 +14,14 @@
     "react-dom": "^17.0.0"
   },
   "devDependencies": {
+    "@babel/preset-env": "^7.14.2",
+    "@snowpack/plugin-babel": "^2.1.7",
     "@snowpack/plugin-dotenv": "^2.0.5",
     "@snowpack/plugin-react-refresh": "^2.3.9",
     "@testing-library/react": "^11.0.0",
     "@testing-library/user-event": "^13.1.9",
     "babel-eslint": "^10.1.0",
-    "chai": "^4.2.0",
+    "babel-jest": "^26.6.3",
     "eslint": "^7.19.0",
     "eslint-config-airbnb": "^18.2.1",
     "eslint-config-prettier": "^6.15.0",
