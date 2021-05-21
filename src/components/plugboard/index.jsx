@@ -1,6 +1,6 @@
 import React from 'react';
 import {ALPHABET} from '../../utils/rotors';
-import {usePlugboardContext} from '../context/index';
+import {usePlugboardContext} from '../context';
 import {CHECKED, INDETERMINATE, UNCHECKED, PENDING} from './state';
 import {Plug} from './plug';
 
