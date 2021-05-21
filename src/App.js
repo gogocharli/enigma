@@ -1,10 +1,8 @@
-import React from 'react';
+import './App.css';
 import {AppProviders} from './components/context/index';
 import {RotorBox} from './components/rotors/index';
 import {PlugBoard} from './components/plugboard/index';
 import {Board} from './components/board';
-
-import './App.css';
 
 function App() {
   return (

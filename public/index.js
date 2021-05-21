@@ -1,5 +1,5 @@
+import 'preact/debug';
 import {render} from 'preact';
-import App from './App.jsx';
-import './index.css';
+import App from '../src/App';
 
 render(<App />, document.body);
