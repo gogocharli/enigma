@@ -112,7 +112,15 @@ function Board() {
 
 function Keyboard({text, onChange}) {
   return (
-    <textarea name="keyboard" id="keyboard" value={text} onChange={onChange} />
+    <label htmlFor="keyboard">
+      <p className="sr-only">Input</p>
+      <textarea
+        name="keyboard"
+        id="keyboard"
+        value={text}
+        onChange={onChange}
+      />
+    </label>
   );
 }
 
@@ -122,7 +130,12 @@ Keyboard.propTypes = {
 };
 
 function TextOutput({text}) {
-  return <input value={text} readOnly />;
+  return (
+    <label htmlFor="output">
+      <p className="sr-only">Output</p>
+      <input id="output" value={text} readOnly />
+    </label>
+  );
 }
 
 TextOutput.propTypes = {

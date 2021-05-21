@@ -1,5 +1,3 @@
-// Number of rotors
-// Reflector used
 import * as React from 'react';
 import PropTypes from 'prop-types';
 import {Spindle} from './spindle';
@@ -30,13 +28,16 @@ const reflectorTypes = [
 ];
 function ReflectorSelect({selected, onChange}) {
   return (
-    <select value={selected} onChange={onChange}>
-      {reflectorTypes.map((reflector) => (
-        <option key={reflector} value={reflector}>
-          {reflector}
-        </option>
-      ))}
-    </select>
+    <label htmlFor="reflector">
+      <p>Reflector</p>
+      <select id="reflector" value={selected} onChange={onChange}>
+        {reflectorTypes.map((reflector) => (
+          <option key={reflector} value={reflector}>
+            {reflector}
+          </option>
+        ))}
+      </select>
+    </label>
   );
 }
 
