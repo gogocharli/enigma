@@ -1,5 +1,9 @@
+# build
 .build
 build
+dist
+
+# dependecies
 web_modules
 node_modules
 
