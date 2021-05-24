@@ -4,6 +4,8 @@ import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom/extend-expect';
 import App from './App';
 
+const DEFAULT_REFLECTOR = 'B-thin';
+
 test('loads correctly', () => {
   render(<App />);
 });
@@ -42,20 +44,28 @@ test('can undo and return to previous state', () => {
 });
 
 test('can be reset to default state', () => {
-  const container = render(<App />);
+  const {container} = render(<App />);
 
   const input = screen.getByRole('textbox', {name: /input/i});
   const output = screen.getByRole('textbox', {name: /output/i});
+  const reflector = screen.getByRole('combobox', {name: /reflector/i});
+  const rotors = container.querySelectorAll('[id*=rotor-]');
 
   userEvent.type(input, 'enigma');
   userEvent.click(screen.getByRole('button', {name: /reset/i}));
 
-  // todo test for rotors and reflector using container
   expect(input.value).toBe('');
   expect(output.value).toBe('');
-});
+  expect(reflector.value).toBe(DEFAULT_REFLECTOR);
 
-// Setting up the rotors position and typing works
+  rotors.forEach((rotor, index) => {
+    const {value: position} = rotor.querySelector('input');
+    const {value: rotorIndex} = rotor.querySelector('select');
+
+    expect(position).toBe('0');
+    expect(+rotorIndex).toBe(index + 1);
+  });
+});
 
 // Check the turnovers work as intended
 
@@ -66,11 +76,3 @@ test('can be reset to default state', () => {
 // We can create and remove a plugboard connection
 
 // Encoding is transformed with the plugboard connections
-const defaultAppState = {
-  reflector: 'B-thin',
-  rotors: [
-    {type: 'I', position: 'A'},
-    {type: 'II', position: 'A'},
-    {type: 'III', position: 'A'},
-  ],
-};
