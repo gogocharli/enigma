@@ -130,9 +130,36 @@ test('turnovers respect a double step sequence', () => {
   );
 });
 
-// Input and output can be reversed for one another
+test('input and output encode to one another', () => {
+  render(<App />);
+
+  const plainText = 'enigma';
+  const input = screen.getByRole('textbox', {name: /input/i});
+  const output = screen.getByRole('textbox', {name: /output/i});
+
+  userEvent.type(input, plainText);
+  const encodedText = output.value;
+
+  userEvent.click(screen.getByRole('button', {name: /reset/i}));
+
+  userEvent.type(input, encodedText);
+  expect(output.value).toBe(plainText.toUpperCase());
+});
 
 // Changing the rotor order works
+test('rotor order can be changed', () => {
+  const {container} = render(<App />);
+  let rotors = container.querySelectorAll('[id*=rotor-]');
+
+  userEvent.selectOptions(rotors[0].querySelector('select'), '3');
+  userEvent.selectOptions(rotors[1].querySelector('select'), '5');
+
+  rotors = container.querySelectorAll('[id*=rotor-]');
+
+  expect(rotors[0].querySelector('select').value).toBe('3');
+  expect(rotors[1].querySelector('select').value).toBe('5');
+  expect(rotors[2].querySelector('select').value).toBe('1');
+});
 
 // We can create and remove a plugboard connection
 
