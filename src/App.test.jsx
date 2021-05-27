@@ -1,8 +1,9 @@
 import * as React from 'react';
-import {render, screen} from '@testing-library/react';
+import {render, screen, fireEvent} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom/extend-expect';
 import App from './App';
+import {ALPHABET, ROTORS} from './utils/rotors';
 
 const DEFAULT_REFLECTOR = 'B-thin';
 
@@ -63,11 +64,71 @@ test('can be reset to default state', () => {
     const {value: rotorIndex} = rotor.querySelector('select');
 
     expect(position).toBe('0');
-    expect(+rotorIndex).toBe(index + 1);
+    expect(Number(rotorIndex)).toBe(index + 1);
   });
 });
 
-// Check the turnovers work as intended
+const turnovers = ROTORS.map((rotor) => ALPHABET.indexOf(rotor.turnover));
+
+test('turnovers respect a normal step sequence', () => {
+  const {container} = render(<App />);
+
+  const input = screen.getByRole('textbox', {name: /input/i});
+  const rotors = container.querySelectorAll('[id*=rotor-]');
+
+  const lastRotor = {
+    input: rotors[2].querySelector('input'),
+    type: +rotors[2].querySelector('select').value - 1,
+  };
+
+  // Move the rotor slider one position before the turnover notch
+  fireEvent.change(lastRotor.input, {
+    target: {value: turnovers[lastRotor.type]},
+  });
+
+  userEvent.type(input, 'e');
+
+  expect(+rotors[0].querySelector('input').value).toBe(0);
+  expect(+rotors[1].querySelector('input').value).toBe(1);
+  expect(+rotors[2].querySelector('input').value).toBe(
+    turnovers[lastRotor.type] + 1,
+  );
+});
+
+test('turnovers respect a double step sequence', () => {
+  const {container} = render(<App />);
+
+  const input = screen.getByRole('textbox', {name: /input/i});
+  const rotors = container.querySelectorAll('[id*=rotor-]');
+
+  const secondRetor = {
+    input: rotors[1].querySelector('input'),
+    type: +rotors[1].querySelector('select').value - 1,
+  };
+
+  const lastRotor = {
+    input: rotors[2].querySelector('input'),
+    type: +rotors[2].querySelector('select').value - 1,
+  };
+
+  fireEvent.change(secondRetor.input, {
+    target: {value: turnovers[secondRetor.type]},
+  });
+
+  fireEvent.change(lastRotor.input, {
+    target: {value: turnovers[lastRotor.type]},
+  });
+
+  userEvent.type(input, 'e');
+
+  expect(+rotors[0].querySelector('input').value).toBe(1);
+  expect(+rotors[1].querySelector('input').value).toBe(
+    turnovers[secondRetor.type] + 1,
+  );
+  expect(+rotors[2].querySelector('input').value).toBe(
+    turnovers[lastRotor.type] + 1,
+  );
+});
 
 // Input and output can be reversed for one another
 
