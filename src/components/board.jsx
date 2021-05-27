@@ -69,8 +69,8 @@ function Board() {
     dispatch({
       type: 'encode',
       payload: {
-        plainText: encodeThroughPlugboard(connections, text.toUpperCase()),
-        updateChar: lastUpdatedChar,
+        plainText: text.toUpperCase(),
+        updateChar: encodeThroughPlugboard(connections, lastUpdatedChar),
       },
     });
   }
@@ -144,7 +144,7 @@ TextOutput.propTypes = {
 
 /**
  * Replace a letter with its current plugboard match
- * @param {} connections
+ * @param {Connections} connections
  * @param {string} text
  * @returns {string}
  */
