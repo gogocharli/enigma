@@ -4,11 +4,18 @@ A reconstruction of the Enigma Machine using ReactJs.
 
 ## Summary
 
-The [Enigma machine](https://en.wikipedia.org/wiki/Enigma_machine) is a cipher device developed during the WWII era and used by Nazi Germany for communication in its millitary throughout the war.
+The [Enigma machine](https://en.wikipedia.org/wiki/Enigma_machine) is a cipher
+device developed during the WWII era and used by Nazi Germany for communication
+in its millitary throughout the war.
 
-It was a very intricate device during its time. It took a lot of effort from the allies to crack its code with the help of brilliant individuals such as [Alan Turing](https://en.wikipedia.org/wiki/Alan_Turing) and the team at [Bletchley Park](https://en.wikipedia.org/wiki/Bletchley_Park).
+It was a very intricate device during its time. It took a lot of effort from the
+allies to crack its code with the help of brilliant individuals such as
+[Alan Turing](https://en.wikipedia.org/wiki/Alan_Turing) and the team at
+[Bletchley Park](https://en.wikipedia.org/wiki/Bletchley_Park).
 
-This project aims to create a user interface which replicates the original machine and its variants in order for me, and hopefully other people to understand the device better.
+This project aims to create a user interface which replicates the original
+machine and its variants in order for me, and hopefully other people to
+understand the device better.
 
 ## Helpful resources
 
@@ -30,22 +37,20 @@ This project aims to create a user interface which replicates the original machi
 
 ### npm start
 
-Runs the app in the development mode.
-Open http://localhost:8080 to view it in the browser.
+Runs the app in the development mode. Open http://localhost:3000 to view it in
+the browser.
 
-The page will reload if you make edits.
-You will also see any lint errors in the console.
+The page will reload if you make edits. You will also see any lint errors in the
+console.
 
 ### npm run build
 
-Builds a static copy of your site to the `build/` folder.
-Your app is ready to be deployed!
-
-**For the best production performance:** Add a build bundler plugin like "@snowpack/plugin-webpack" to your `snowpack.config.js` config file.
+Builds a static copy of your site to the `dist/` folder. Your app is ready to be
+deployed!
 
 ### npm test
 
-Launches the application test runner.
-Run with the `--watch` flag (`npm test -- --watch`) to run in interactive watch mode.
+Launches the application test runner. Run with the `--watch` flag
+(`npm test -- --watch`) to run in interactive watch mode.
 
-> ✨ Bootstrapped with Create Snowpack App (CSA).
+> ✨ Bootstrapped with Vite.
