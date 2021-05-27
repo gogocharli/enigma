@@ -162,5 +162,15 @@ test('rotor order can be changed', () => {
 });
 
 // We can create and remove a plugboard connection
+test('plugboard can be connected', () => {
+  render(<App />);
 
+  userEvent.click(screen.getByLabelText(/a/i));
+  expect(screen.getByLabelText(/a/i)).not.toBeChecked();
+  expect(screen.getByLabelText(/a/i).indeterminate).toBe(true);
+
+  userEvent.click(screen.getByLabelText(/b/i));
+  expect(screen.getByLabelText(/a/i)).toBeChecked();
+  expect(screen.getByLabelText(/b/i)).toBeChecked();
+});
 // Encoding is transformed with the plugboard connections
