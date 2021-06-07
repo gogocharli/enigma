@@ -46,7 +46,8 @@ export function PlugBoard() {
   }
 
   return (
-    <div className="plugboard">
+    <fieldset className="plugboard">
+      <legend>Plugboard Settings</legend>
       {plugOptions.map((letter) => (
         <Plug
           letter={letter}
@@ -55,7 +56,7 @@ export function PlugBoard() {
           key={letter}
         />
       ))}
-    </div>
+    </fieldset>
   );
 }
 

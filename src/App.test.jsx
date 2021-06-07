@@ -165,13 +165,16 @@ test('rotor order can be changed', () => {
 test('plugboard can be connected', () => {
   render(<App />);
 
-  userEvent.click(screen.getByLabelText(/a/i));
-  expect(screen.getByLabelText(/a/i)).not.toBeChecked();
-  expect(screen.getByLabelText(/a/i).indeterminate).toBe(true);
+  const plugboard = screen.getByRole('group', {name: /plugboard/i});
+  userEvent.click(getByRole(plugboard, 'checkbox', {name: /a/i}));
+  expect(getByRole(plugboard, 'checkbox', {name: /a/i})).not.toBeChecked();
+  expect(getByRole(plugboard, 'checkbox', {name: /a/i}).indeterminate).toBe(
+    true,
+  );
 
-  userEvent.click(screen.getByLabelText(/b/i));
-  expect(screen.getByLabelText(/a/i)).toBeChecked();
-  expect(screen.getByLabelText(/b/i)).toBeChecked();
+  userEvent.click(getByRole(plugboard, 'checkbox', {name: /b/i}));
+  expect(getByRole(plugboard, 'checkbox', {name: /a/i})).toBeChecked();
+  expect(getByRole(plugboard, 'checkbox', {name: /b/i})).toBeChecked();
 });
 
 test.todo('Encoding is transformed with the plugboard connections');
