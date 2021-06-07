@@ -1,6 +1,7 @@
 import * as React from 'react';
 import PropTypes from 'prop-types';
 import {ALPHABET} from '../utils/rotors';
+import {PENDING} from './plugboard/state';
 import {
   useRotorContext,
   useHistoryContext,
@@ -12,6 +13,13 @@ function Board() {
   const [state, dispatch] = useRotorContext();
   const {step, setStep, history, setHistory} = useHistoryContext();
   const [connections] = usePlugboardContext();
+
+  // Resets all state within the app and clears history
+  const reset = React.useCallback(() => {
+    dispatch({type: 'reset', payload: [1, 2, 3]});
+    setStep(-1);
+    setHistory([]);
+  }, [dispatch, setHistory, setStep]);
 
   // Swap the letter with its associated match if it exists
   const encodedText = state.encodedText
@@ -41,6 +49,10 @@ function Board() {
       setRawText('');
     }
   }, [encodedText]);
+
+  React.useEffect(() => {
+    reset();
+  }, [connections, reset]);
 
   function handleInputChange(e) {
     e.preventDefault();
@@ -75,13 +87,6 @@ function Board() {
     });
   }
 
-  // Resets all state within the app and clears history
-  function reset() {
-    dispatch({type: 'reset', payload: [1, 2, 3]});
-    setStep(-1);
-    setHistory([]);
-  }
-
   // Goes back to previous state
   function previous() {
     const previousStep = step - 1;
@@ -96,10 +101,17 @@ function Board() {
     }
   }
 
+  const isConnectionPending = Array.from(connections).some(
+    ([, status]) => status === PENDING,
+  );
   return (
     <div style={{display: 'flex', flexDirection: 'column', gap: '1em'}}>
       <TextOutput text={encodedText} />
-      <Keyboard text={rawText} onChange={handleInputChange} />
+      <Keyboard
+        text={rawText}
+        onChange={handleInputChange}
+        disabled={isConnectionPending}
+      />
       <button type="button" onClick={reset}>
         Reset
       </button>
@@ -110,7 +122,7 @@ function Board() {
   );
 }
 
-function Keyboard({text, onChange}) {
+function Keyboard({text, onChange, disabled = false}) {
   return (
     <label htmlFor="keyboard">
       <p className="sr-only">Input</p>
@@ -119,7 +131,9 @@ function Keyboard({text, onChange}) {
         id="keyboard"
         value={text}
         onChange={onChange}
+        disabled={disabled}
       />
+      {disabled && <p>Please make sure to close your plugboard connections</p>}
     </label>
   );
 }
@@ -127,6 +141,7 @@ function Keyboard({text, onChange}) {
 Keyboard.propTypes = {
   text: PropTypes.string.isRequired,
   onChange: PropTypes.func.isRequired,
+  disabled: PropTypes.bool,
 };
 
 function TextOutput({text}) {
