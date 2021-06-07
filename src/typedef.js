@@ -1,7 +1,12 @@
 /**
- * Possible reducer actions types for the rotors' box
+ * Action types for the reducer
+ * @typedef {'setup' | 'init' | 'position'| 'encode'| 'jump'| 'reset'} ActionTypes
+ */
+
+/**
+ * Possible reducer actions for the rotors' box
  * @typedef {Object} Action
- * @property {'setup' | 'init' | 'position'| 'encode'| 'jump'| 'reset'} type
+ * @property {ActionTypes} type
  * @property {keyof RotorState} payload
  */
 

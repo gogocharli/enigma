@@ -14,13 +14,6 @@ function Board() {
   const {step, setStep, history, setHistory} = useHistoryContext();
   const [connections] = usePlugboardContext();
 
-  // Resets all state within the app and clears history
-  const reset = React.useCallback(() => {
-    dispatch({type: 'reset', payload: [1, 2, 3]});
-    setStep(-1);
-    setHistory([]);
-  }, [dispatch, setHistory, setStep]);
-
   // Swap the letter with its associated match if it exists
   const encodedText = state.encodedText
     ? encodeThroughPlugboard(connections, state.encodedText)
@@ -51,8 +44,17 @@ function Board() {
   }, [encodedText]);
 
   React.useEffect(() => {
-    reset();
-  }, [connections, reset]);
+    // Update with the current rotors and reflectors
+    const currentRotors = state.rotors.map((rotor) => rotor.rotorType);
+    dispatch({
+      type: 'reset',
+      payload: {rotors: currentRotors, reflector: state.reflector},
+    });
+    setStep(-1);
+    setHistory([]);
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [connections, dispatch, setHistory, setStep]);
 
   function handleInputChange(e) {
     e.preventDefault();
@@ -85,6 +87,13 @@ function Board() {
         updateChar: encodeThroughPlugboard(connections, lastUpdatedChar),
       },
     });
+  }
+
+  // Resets all state within the app and clears history
+  function reset() {
+    dispatch({type: 'reset', payload: {rotors: [1, 2, 3]}});
+    setStep(-1);
+    setHistory([]);
   }
 
   // Goes back to previous state
