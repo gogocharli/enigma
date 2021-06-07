@@ -1,5 +1,5 @@
 import * as React from 'react';
-import {render, screen, fireEvent} from '@testing-library/react';
+import {render, screen, fireEvent, getByRole} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import '@testing-library/jest-dom/extend-expect';
 import App from './App';
@@ -45,12 +45,12 @@ test('can undo and return to previous state', () => {
 });
 
 test('can be reset to default state', () => {
-  const {container} = render(<App />);
+  render(<App />);
 
   const input = screen.getByRole('textbox', {name: /input/i});
   const output = screen.getByRole('textbox', {name: /output/i});
   const reflector = screen.getByRole('combobox', {name: /reflector/i});
-  const rotors = container.querySelectorAll('[id*=rotor-]');
+  const rotors = screen.getAllByRole('group', {name: /rotor/i});
 
   userEvent.type(input, 'enigma');
   userEvent.click(screen.getByRole('button', {name: /reset/i}));
@@ -60,8 +60,8 @@ test('can be reset to default state', () => {
   expect(reflector.value).toBe(DEFAULT_REFLECTOR);
 
   rotors.forEach((rotor, index) => {
-    const {value: position} = rotor.querySelector('input');
-    const {value: rotorIndex} = rotor.querySelector('select');
+    const {value: position} = getByRole(rotor, 'slider');
+    const {value: rotorIndex} = getByRole(rotor, 'combobox');
 
     expect(position).toBe('0');
     expect(Number(rotorIndex)).toBe(index + 1);
@@ -71,14 +71,14 @@ test('can be reset to default state', () => {
 const turnovers = ROTORS.map((rotor) => ALPHABET.indexOf(rotor.turnover));
 
 test('turnovers respect a normal step sequence', () => {
-  const {container} = render(<App />);
+  render(<App />);
 
   const input = screen.getByRole('textbox', {name: /input/i});
-  const rotors = container.querySelectorAll('[id*=rotor-]');
+  const rotors = screen.getAllByRole('group', {name: /rotor/i});
 
   const lastRotor = {
-    input: rotors[2].querySelector('input'),
-    type: +rotors[2].querySelector('select').value - 1,
+    input: getByRole(rotors[2], 'slider'),
+    type: +getByRole(rotors[2], 'combobox').value - 1,
   };
 
   // Move the rotor slider one position before the turnover notch
@@ -88,31 +88,31 @@ test('turnovers respect a normal step sequence', () => {
 
   userEvent.type(input, 'e');
 
-  expect(+rotors[0].querySelector('input').value).toBe(0);
-  expect(+rotors[1].querySelector('input').value).toBe(1);
-  expect(+rotors[2].querySelector('input').value).toBe(
+  expect(+getByRole(rotors[0], 'slider').value).toBe(0);
+  expect(+getByRole(rotors[1], 'slider').value).toBe(1);
+  expect(+getByRole(rotors[2], 'slider').value).toBe(
     turnovers[lastRotor.type] + 1,
   );
 });
 
 test('turnovers respect a double step sequence', () => {
-  const {container} = render(<App />);
+  render(<App />);
 
   const input = screen.getByRole('textbox', {name: /input/i});
-  const rotors = container.querySelectorAll('[id*=rotor-]');
+  const rotors = screen.getAllByRole('group', {name: /rotor/i});
 
-  const secondRetor = {
-    input: rotors[1].querySelector('input'),
-    type: +rotors[1].querySelector('select').value - 1,
+  const secondRotor = {
+    input: getByRole(rotors[1], 'slider'),
+    type: +getByRole(rotors[1], 'combobox').value - 1,
   };
 
   const lastRotor = {
-    input: rotors[2].querySelector('input'),
-    type: +rotors[2].querySelector('select').value - 1,
+    input: getByRole(rotors[2], 'slider'),
+    type: +getByRole(rotors[2], 'combobox').value - 1,
   };
 
-  fireEvent.change(secondRetor.input, {
-    target: {value: turnovers[secondRetor.type]},
+  fireEvent.change(secondRotor.input, {
+    target: {value: turnovers[secondRotor.type]},
   });
 
   fireEvent.change(lastRotor.input, {
@@ -121,11 +121,11 @@ test('turnovers respect a double step sequence', () => {
 
   userEvent.type(input, 'e');
 
-  expect(+rotors[0].querySelector('input').value).toBe(1);
-  expect(+rotors[1].querySelector('input').value).toBe(
-    turnovers[secondRetor.type] + 1,
+  expect(+getByRole(rotors[0], 'slider').value).toBe(1);
+  expect(+getByRole(rotors[1], 'slider').value).toBe(
+    turnovers[secondRotor.type] + 1,
   );
-  expect(+rotors[2].querySelector('input').value).toBe(
+  expect(+getByRole(rotors[2], 'slider').value).toBe(
     turnovers[lastRotor.type] + 1,
   );
 });
@@ -148,20 +148,20 @@ test('input and output encode to one another', () => {
 
 // Changing the rotor order works
 test('rotor order can be changed', () => {
-  const {container} = render(<App />);
-  let rotors = container.querySelectorAll('[id*=rotor-]');
+  render(<App />);
+  let rotors = screen.getAllByRole('group', {name: /rotor/i});
 
-  userEvent.selectOptions(rotors[0].querySelector('select'), '3');
-  userEvent.selectOptions(rotors[1].querySelector('select'), '5');
+  userEvent.selectOptions(getByRole(rotors[0], 'combobox'), '3');
+  userEvent.selectOptions(getByRole(rotors[1], 'combobox'), '5');
 
-  rotors = container.querySelectorAll('[id*=rotor-]');
+  // Querying a second time because the order changes
+  rotors = screen.getAllByRole('group', {name: /rotor/i});
 
-  expect(rotors[0].querySelector('select').value).toBe('3');
-  expect(rotors[1].querySelector('select').value).toBe('5');
-  expect(rotors[2].querySelector('select').value).toBe('1');
+  expect(getByRole(rotors[0], 'combobox').value).toBe('3');
+  expect(getByRole(rotors[1], 'combobox').value).toBe('5');
+  expect(getByRole(rotors[2], 'combobox').value).toBe('1');
 });
 
-// We can create and remove a plugboard connection
 test('plugboard can be connected', () => {
   render(<App />);
 
@@ -173,4 +173,5 @@ test('plugboard can be connected', () => {
   expect(screen.getByLabelText(/a/i)).toBeChecked();
   expect(screen.getByLabelText(/b/i)).toBeChecked();
 });
-// Encoding is transformed with the plugboard connections
+
+test.todo('Encoding is transformed with the plugboard connections');
