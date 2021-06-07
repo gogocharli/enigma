@@ -17,7 +17,11 @@ export function Rotor({type: currentType, position, onChange}) {
   }
 
   return (
-    <div id={`rotor-${currentType}`} className="rotor">
+    <fieldset
+      id={`rotor-${currentType}`}
+      className="rotor"
+      aria-label={`Settings Rotor ${currentType}`}
+    >
       <RotorSelect selected={currentType} onChange={onChange} />
       <p>Position: {ALPHABET[position]}</p>
       <input
@@ -29,7 +33,7 @@ export function Rotor({type: currentType, position, onChange}) {
         value={position}
         onChange={handlePositionChange}
       />
-    </div>
+    </fieldset>
   );
 }
 
