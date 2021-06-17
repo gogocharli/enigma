@@ -4,6 +4,10 @@ import {useSessionStorage} from '../../utils/hooks';
 const HistoryContext = React.createContext();
 HistoryContext.displayName = 'History Context';
 
+/**
+ * Storing information in session storage for persistence while
+ * the page is open.
+ */
 function StateHistoryProvider(props) {
   const [step, setStep] = useSessionStorage('__enigma-step__', -1, false);
   const [history, setHistory] = useSessionStorage(

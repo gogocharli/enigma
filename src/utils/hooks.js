@@ -1,5 +1,13 @@
 import {useState, useEffect, useRef} from 'react';
 
+/**
+ * Saves and retrieves data to and from sessionStorage
+ * @param {string} key
+ * @param {any} initalValue
+ * @param {{serialize: (any) => string, deserialize: (string) => any}}
+ * serializeOptions
+ * @see https://developer.mozilla.org/en-US/docs/Web/API/Window/sessionStorage
+ */
 function useSessionStorage(
   key,
   initalValue = '',
