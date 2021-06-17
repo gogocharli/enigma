@@ -2,6 +2,12 @@ import * as React from 'react';
 import {useRotorContext} from '../context/index';
 import {Rotor} from './rotor';
 
+/**
+ * Renders and handle swapping out the rotors.
+ * Passing the reflector to conserve its type when
+ * changing the setup
+ * @param {{reflector: Reflector}}
+ */
 export function Spindle({reflector = 'B'}) {
   const [{rotors}, dispatch] = useRotorContext();
   const [types, setTypes] = React.useState([1, 2, 3]);

@@ -16,6 +16,10 @@ export function RotorBox() {
   );
 }
 
+/**
+ * Original reflectors used for the machine
+ * @see https://en.wikipedia.org/wiki/Enigma_rotor_details#Rotor_wiring_tables
+ */
 const reflectorTypes = [
   'A',
   'B',
@@ -26,6 +30,12 @@ const reflectorTypes = [
   'ETW',
   'Gamma',
 ];
+
+/**
+ * Change reflectors on the fly.
+ * Note that this will reset the encoded text
+ * @param {{selected: Reflector; onChange: function}}
+ */
 function ReflectorSelect({selected, onChange}) {
   return (
     <label htmlFor="reflector">

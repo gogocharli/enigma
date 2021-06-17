@@ -5,11 +5,15 @@ import {useRotorContext} from '../context/index';
 
 const rotorTypes = ['I', 'II', 'III', 'IV', 'V'];
 
+/**
+ * Displays the internal position and type of the rotor
+ * @param {{type: number; position: number; onChange: function}}
+ */
 export function Rotor({type: currentType, position, onChange}) {
   const [, dispatch] = useRotorContext();
 
   function handlePositionChange(e) {
-    const currentPosition = +e.target.value;
+    const currentPosition = Number(e.target.value);
     dispatch({
       type: 'position',
       payload: {type: currentType, position: currentPosition},
@@ -43,6 +47,10 @@ Rotor.propTypes = {
   onChange: PropTypes.func,
 };
 
+/**
+ * Handle selection of a new rotor type
+ * @param {{selected: number; onChange: function}}
+ */
 function RotorSelect({selected, onChange}) {
   return (
     <select value={selected} onChange={onChange(selected)}>
