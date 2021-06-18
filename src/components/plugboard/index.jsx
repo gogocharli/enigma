@@ -75,7 +75,7 @@ function initConnection(setConnections, plug) {
 }
 
 /**
- * Close the previous open connection from its PENDING state
+ * Complete the latest PENDING connection state
  * @param {Function} setConnections Dispatch Function
  * @param {string} plug the plug to close the connection
  * @param {string} match the matching plug
