@@ -166,6 +166,7 @@ test('plugboard can be connected', () => {
   render(<App />);
 
   const plugboard = screen.getByRole('group', {name: /plugboard/i});
+
   userEvent.click(getByRole(plugboard, 'checkbox', {name: /a/i}));
   expect(getByRole(plugboard, 'checkbox', {name: /a/i})).not.toBeChecked();
   expect(getByRole(plugboard, 'checkbox', {name: /a/i}).indeterminate).toBe(
@@ -177,4 +178,24 @@ test('plugboard can be connected', () => {
   expect(getByRole(plugboard, 'checkbox', {name: /b/i})).toBeChecked();
 });
 
-test.todo('Encoding is transformed with the plugboard connections');
+test('Encoding is transformed with the plugboard connections', () => {
+  render(<App />);
+
+  const input = screen.getByRole('textbox', {name: /input/i});
+  const output = screen.getByRole('textbox', {name: /output/i});
+
+  const plugboard = screen.getByRole('group', {name: /plugboard/i});
+  userEvent.type(input, 'enigma');
+  const unpluggedEncoding = output.value;
+
+  userEvent.click(getByRole(plugboard, 'checkbox', {name: /a/i}));
+  userEvent.click(getByRole(plugboard, 'checkbox', {name: /b/i}));
+
+  expect(input.value).toBeFalsy();
+  expect(output.value).toBeFalsy();
+
+  userEvent.type(input, 'enigma');
+  const pluggedEncoding = output.value;
+
+  expect(unpluggedEncoding).not.toBe(pluggedEncoding);
+});
