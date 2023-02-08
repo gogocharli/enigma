@@ -1,24 +1,28 @@
 import {useState, useEffect, useRef} from 'react';
 
+interface SerializeOptions<T> {
+  serialize?: (data: T) => string;
+  deserialize?: (key: string) => T;
+}
+
 /**
  * Saves and retrieves data to and from sessionStorage
- * @param {string} key
- * @param {any} initalValue
- * @param {{serialize: (any) => string, deserialize: (string) => any}}
- * serializeOptions
  * @see https://developer.mozilla.org/en-US/docs/Web/API/Window/sessionStorage
  */
-function useSessionStorage(
-  key,
-  initalValue = '',
-  {serialize = JSON.stringify, deserialize = JSON.parse} = {},
+function useSessionStorage<T>(
+  key: string,
+  initalValue: T | (() => T),
+  {
+    serialize = JSON.stringify,
+    deserialize = JSON.parse,
+  }: SerializeOptions<T> = {},
 ) {
-  const [state, setState] = useState(() => {
+  const [data, setStoredData] = useState(() => {
     const storedValue = window.sessionStorage.getItem(key);
     if (storedValue) {
       return deserialize(storedValue);
     }
-    return typeof initalValue === 'function' ? initalValue() : initalValue;
+    return initalValue instanceof Function ? initalValue() : initalValue;
   });
 
   const prevKeyRef = useRef(key);
@@ -29,15 +33,15 @@ function useSessionStorage(
       prevKeyRef.current = key;
     }
 
-    window.sessionStorage.setItem(key, serialize(state));
+    window.sessionStorage.setItem(key, serialize(data));
     prevKeyRef.current = key;
 
     return () => {
       window.sessionStorage.clear();
     };
-  }, [key, serialize, state]);
+  }, [key, serialize, data]);
 
-  return [state, setState];
+  return [data, setStoredData];
 }
 
 export {useSessionStorage};

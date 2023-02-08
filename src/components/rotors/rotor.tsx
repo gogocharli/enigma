@@ -1,5 +1,4 @@
 import * as React from 'react';
-import PropTypes from 'prop-types';
 import {ALPHABET} from '../../utils/rotors';
 import {useRotorContext} from '../context/index';
 
@@ -7,12 +6,17 @@ const rotorTypes = ['I', 'II', 'III', 'IV', 'V'];
 
 /**
  * Displays the internal position and type of the rotor
- * @param {{type: number; position: number; onChange: function}}
  */
-export function Rotor({type: currentType, position, onChange}) {
+
+interface RotorProps {
+  type: number;
+  position: number;
+  onChange: (s: number) => React.ChangeEventHandler<HTMLSelectElement>;
+}
+export function Rotor({type: currentType, position, onChange}: RotorProps) {
   const [, dispatch] = useRotorContext();
 
-  function handlePositionChange(e) {
+  function handlePositionChange(e: React.ChangeEvent<HTMLInputElement>) {
     const currentPosition = Number(e.target.value);
     dispatch({
       type: 'position',
@@ -41,17 +45,15 @@ export function Rotor({type: currentType, position, onChange}) {
   );
 }
 
-Rotor.propTypes = {
-  type: PropTypes.number.isRequired,
-  position: PropTypes.number.isRequired,
-  onChange: PropTypes.func,
-};
-
 /**
  * Handle selection of a new rotor type
- * @param {{selected: number; onChange: function}}
  */
-function RotorSelect({selected, onChange}) {
+
+interface RotorSelectProps {
+  selected: number;
+  onChange: (s: number) => React.ChangeEventHandler<HTMLSelectElement>;
+}
+function RotorSelect({selected, onChange}: RotorSelectProps) {
   return (
     <select value={selected} onChange={onChange(selected)}>
       {rotorTypes.map((rotorType) => (
@@ -62,8 +64,3 @@ function RotorSelect({selected, onChange}) {
     </select>
   );
 }
-
-RotorSelect.propTypes = {
-  selected: PropTypes.number.isRequired,
-  onChange: PropTypes.func,
-};

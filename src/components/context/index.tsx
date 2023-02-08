@@ -12,7 +12,6 @@
 */
 
 import * as React from 'react';
-import PropTypes from 'prop-types';
 
 import {RotorProvider} from './rotor-context';
 import {StateHistoryProvider} from './history-context';
@@ -20,9 +19,8 @@ import {PlugboardProvider} from './plugboard-context';
 
 /**
  * Unique provider dispatching all context providers from the app
- * @param {{children: React.ReactNode}} props
  */
-function AppProviders({children}) {
+function AppProviders({children}: {children: React.ReactNode}) {
   return (
     <RotorProvider>
       <StateHistoryProvider>
@@ -31,10 +29,6 @@ function AppProviders({children}) {
     </RotorProvider>
   );
 }
-
-AppProviders.propTypes = {
-  children: PropTypes.node.isRequired,
-};
 
 export {AppProviders};
 export {useRotorContext} from './rotor-context';

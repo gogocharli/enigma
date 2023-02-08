@@ -1,20 +1,26 @@
 import * as React from 'react';
+import type {RotorState} from 'src/types';
 import {useSessionStorage} from '../../utils/hooks';
 
-const HistoryContext = React.createContext();
+interface HistoryContextType {
+  step: number;
+  setStep: React.Dispatch<React.SetStateAction<HistoryContextType['step']>>;
+  history: RotorState[];
+  setHistory: React.Dispatch<
+    React.SetStateAction<HistoryContextType['history']>
+  >;
+}
+
+const HistoryContext = React.createContext<HistoryContextType | null>(null);
 HistoryContext.displayName = 'History Context';
 
 /**
  * Storing information in session storage for persistence while
  * the page is open.
  */
-function StateHistoryProvider(props) {
-  const [step, setStep] = useSessionStorage('__enigma-step__', -1, false);
-  const [history, setHistory] = useSessionStorage(
-    '__enigma-history__',
-    [],
-    false,
-  );
+function StateHistoryProvider(props: any) {
+  const [step, setStep] = useSessionStorage('__enigma-step__', -1);
+  const [history, setHistory] = useSessionStorage('__enigma-history__', []);
 
   return (
     <HistoryContext.Provider

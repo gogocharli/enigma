@@ -1,6 +1,6 @@
-import '../typedef';
+import type {Reflector, Rotor} from 'src/types';
 
-const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' as const;
 
 const ROTORS = [
   {
@@ -28,30 +28,27 @@ const ROTORS = [
     cipher: 'VZBRGITYUPSDNHLXAWMJQOFECK',
     turnover: 'Z',
   },
-];
+] as const;
 
 const REFLECTORS = new Map([
-  ['A', 'EJMZALYXVBWFCRQUONTSPIKHGD'],
-  ['B', 'YRUHQSLDPXNGOKMIEBFZCWVJAT'],
-  ['B-thin', 'ENKQAUYWJICOPBLMDXZVFTHRGS'],
-  ['Beta', 'LEYJVCNIXWPBQMDRTAKZGFUHOS'],
-  ['C', 'FVPJIAOYEDRZXWGCTKUQSBNMHL'],
-  ['C-thin', 'RDOBJNTKVEHMLFCWZAXGYIPSUQ'],
-  ['ETW', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'],
-  ['Gamma', 'FSOKANUERHMBTIYCWLQPZXVGJD'],
+  ['A', 'EJMZALYXVBWFCRQUONTSPIKHGD'] as const,
+  ['B', 'YRUHQSLDPXNGOKMIEBFZCWVJAT'] as const,
+  ['B-thin', 'ENKQAUYWJICOPBLMDXZVFTHRGS'] as const,
+  ['Beta', 'LEYJVCNIXWPBQMDRTAKZGFUHOS'] as const,
+  ['C', 'FVPJIAOYEDRZXWGCTKUQSBNMHL'] as const,
+  ['C-thin', 'RDOBJNTKVEHMLFCWZAXGYIPSUQ'] as const,
+  ['ETW', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'] as const,
+  ['Gamma', 'FSOKANUERHMBTIYCWLQPZXVGJD'] as const,
 ]);
 
 /**
  * Initialize the reflector settings used for character encoding
- * @param {Reflector} reflectorType
  */
-const initReflector = (reflectorType) => {
+const initReflector = (reflectorType: Reflector) => {
   /**
    * Encodes an alphabetical character to the matching cipher caracter
-   * @param {string} char
-   * @param {Rotor[]} rotors
    */
-  function encodeChar(char, rotors) {
+  function encodeChar(char: string, rotors: Rotor[]) {
     // The encoding is done from last to first (RTL)
     const reverseRotors = [...rotors].reverse();
 
@@ -63,6 +60,9 @@ const initReflector = (reflectorType) => {
 
     // Get the new characater from the reflector
     const reflector = REFLECTORS.get(reflectorType);
+
+    if (!reflector) return '';
+
     const reflectedChar = ALPHABET[reflector.indexOf(firstPassChar)];
 
     // This encoding is done from first to last (LTR)
@@ -78,11 +78,15 @@ const initReflector = (reflectorType) => {
 
 /**
  * Encrypts the plaintext to the character to be transferred to the reflector
- * @param {string} char the plain text character
- * @param {Rotor[]} rotors
- * @param {string[]} currentCiphers ciphers at the current rotor positions
+ * @param char the plain text character
+ * @param rotors
+ * @param currentCiphers ciphers at the current rotor positions
  */
-function alphaToCipher(char, rotors, currentCiphers) {
+function alphaToCipher(
+  char: string,
+  rotors: Rotor[],
+  currentCiphers: string[],
+) {
   // The current encoded character after each rotor is derived from the "alphabet"
   // created from the previous rotor's position.
   const encodedChar = rotors.reduce(function (
@@ -114,7 +118,11 @@ function alphaToCipher(char, rotors, currentCiphers) {
  * @param {Rotor[]} rotors
  * @param {string[]} currentCiphers ciphers at the current rotor positions
  */
-function cipherToAlpha(char, rotors, currentCiphers) {
+function cipherToAlpha(
+  char: string,
+  rotors: Rotor[],
+  currentCiphers: string[],
+) {
   const charIndex = ALPHABET.indexOf(char);
 
   const encodedCharIndex = rotors.reduce(function (
@@ -144,20 +152,18 @@ function cipherToAlpha(char, rotors, currentCiphers) {
 
 /**
  * Retrieves the current cipher of a rotor, given its position
- * @param {Rotor}
- * @returns {string}
  */
-function extractCipher({rotorType, position}) {
-  let {cipher} = ROTORS[rotorType - 1];
-  cipher = cipher.slice(position) + cipher.slice(0, position);
-  return cipher;
+function extractCipher({rotorType, position}: Rotor): string {
+  const {cipher: originalCipher} = ROTORS[rotorType - 1];
+  const positionedCipher =
+    originalCipher.slice(position) + originalCipher.slice(0, position);
+  return positionedCipher;
 }
 
 /**
  * Retrieves the turnover index from the rotor's type
- * @param {string} rotorType
  */
-function getTurnoverIndex(rotorType) {
+function getTurnoverIndex(rotorType: number) {
   const {turnover} = ROTORS[rotorType - 1];
   const turnoverIndex = ALPHABET.indexOf(turnover);
   return turnoverIndex;
@@ -165,10 +171,9 @@ function getTurnoverIndex(rotorType) {
 
 /**
  * Create a rotor list based on a selection of their type indices
- * @param {number[]} rotorTypes
- * @returns {Rotor[]} The selected rotors inital settings
+ * @returns The selected rotors inital settings
  */
-function getRotors(rotorTypes) {
+function getRotors(rotorTypes: number[]): Rotor[] {
   const rotors = rotorTypes.map((rotorType) => ({
     key: ROTORS[rotorType - 1].type,
     rotorType,
@@ -182,9 +187,8 @@ function getRotors(rotorTypes) {
 
 /**
  * Increment the position of the rotor
- * @param {Rotor} rotor
  */
-function incrementPosition(rotor) {
+function incrementPosition(rotor: Rotor) {
   rotor.position += 1;
   rotor.position %= 26;
   rotor.updated = true;
@@ -192,11 +196,8 @@ function incrementPosition(rotor) {
 
 /**
  * Update the rotor's position depending on its position in the box
- * @param {Rotor} rotor
- * @param {number} index
- * @param {Rotor[]} rotorList
  */
-function updateTurnover(rotor, index, rotorList) {
+function updateTurnover(rotor: Rotor, index: number, rotorList: Rotor[]) {
   // Always increment the last rotor's position
   const nextRotor = rotorList[index + 1];
   if (index === 0) {
@@ -215,9 +216,8 @@ function updateTurnover(rotor, index, rotorList) {
 
 /**
  * Update positions accurately with each type
- * @param {Rotor[]} rotors
  */
-function updateRotorsPositions(rotors) {
+function updateRotorsPositions(rotors: Rotor[]) {
   // Reversing the rotors in both places is the fastest way to update them
   // Avoid mutating the original rotors by cloning the objects
   const newRotors = rotors.map((rotor) => ({...rotor})).reverse();

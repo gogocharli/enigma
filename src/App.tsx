@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import './App.css';
 import {AppProviders} from './components/context';
 import {RotorBox} from './components/rotors';

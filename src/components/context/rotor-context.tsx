@@ -1,10 +1,14 @@
 import * as React from 'react';
+import type {RotorState, Action} from 'src/types';
 import {rotorReducer, initRotors} from './reducer';
 
-const RotorContext = React.createContext();
+type RotorContextType = [RotorState, React.Dispatch<Action>];
+
+const RotorContext = React.createContext<RotorContextType | null>(null);
 RotorContext.displayName = 'Rotor Context';
 
-function RotorProvider(props) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function RotorProvider(props: any) {
   const [state, dispatch] = React.useReducer(
     rotorReducer,
     [1, 2, 3],
@@ -15,7 +19,6 @@ function RotorProvider(props) {
 
 /**
  * Broadcasts the state of the rotor elements throughout the app
- * @returns {[RotorState, React.DispatchWithoutAction]}
  */
 function useRotorContext() {
   const value = React.useContext(RotorContext);

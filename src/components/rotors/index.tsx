@@ -1,20 +1,6 @@
 import * as React from 'react';
-import PropTypes from 'prop-types';
+import {Reflector} from 'src/types';
 import {Spindle} from './spindle';
-
-export function RotorBox() {
-  const [reflector, setReflector] = React.useState('B-thin');
-
-  return (
-    <>
-      <ReflectorSelect
-        selected={reflector}
-        onChange={(e) => setReflector(e.target.value)}
-      />
-      <Spindle reflector={reflector} />
-    </>
-  );
-}
 
 /**
  * Original reflectors used for the machine
@@ -31,12 +17,33 @@ const reflectorTypes = [
   'Gamma',
 ];
 
+export function RotorBox() {
+  const [reflector, setReflector] = React.useState<Reflector>('B-thin');
+
+  return (
+    <>
+      <ReflectorSelect
+        selected={reflector}
+        onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+          setReflector(e.target.value as Reflector)
+        }
+      />
+      <Spindle reflector={reflector} />
+    </>
+  );
+}
+
+interface ReflectorSelectProps {
+  selected: Reflector;
+  onChange: React.ChangeEventHandler<HTMLSelectElement>;
+}
+
 /**
  * Change reflectors on the fly.
  * Note that this will reset the encoded text
  * @param {{selected: Reflector; onChange: function}}
  */
-function ReflectorSelect({selected, onChange}) {
+function ReflectorSelect({selected, onChange}: ReflectorSelectProps) {
   return (
     <label htmlFor="reflector">
       <p>Reflector</p>
@@ -50,8 +57,3 @@ function ReflectorSelect({selected, onChange}) {
     </label>
   );
 }
-
-ReflectorSelect.propTypes = {
-  selected: PropTypes.string.isRequired,
-  onChange: PropTypes.func,
-};
