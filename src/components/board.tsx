@@ -1,5 +1,5 @@
 import * as React from 'react';
-import PropTypes from 'prop-types';
+import type {Connections} from 'src/types';
 import {ALPHABET} from '../utils/rotors';
 import {PENDING} from './plugboard/state';
 import {
@@ -48,15 +48,13 @@ function Board() {
     const currentRotors = state.rotors.map((rotor) => rotor.rotorType);
     dispatch({
       type: 'reset',
-      payload: {rotors: currentRotors, reflector: state.reflector},
+      payload: {types: currentRotors, reflector: state.reflector},
     });
     setStep(-1);
     setHistory([]);
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [connections, dispatch, setHistory, setStep]);
 
-  function handleInputChange(e) {
+  function handleInputChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
     e.preventDefault();
     const text = e.target.value;
 
@@ -69,7 +67,7 @@ function Board() {
 
     // Disabling for now because of wonky state
     const spaceMatch = text.match(/\s$/g);
-    if (spaceMatch?.length >= 1) {
+    if (spaceMatch && spaceMatch.length >= 1) {
       return;
     }
 
@@ -77,7 +75,7 @@ function Board() {
     const charMatch = text.match(/[A-Z]/gi);
     const matchedText =
       text.length > 0 ? charMatch?.join('').toUpperCase() : '';
-    const lastUpdatedChar = matchedText.slice(-1);
+    const lastUpdatedChar = matchedText?.slice(-1) || '';
 
     setRawText(text);
     dispatch({
@@ -91,7 +89,7 @@ function Board() {
 
   // Resets all state within the app and clears history
   function reset() {
-    dispatch({type: 'reset', payload: {rotors: [1, 2, 3]}});
+    dispatch({type: 'reset', payload: {types: [1, 2, 3]}});
     setStep(-1);
     setHistory([]);
   }
@@ -131,7 +129,13 @@ function Board() {
   );
 }
 
-function Keyboard({text, onChange, disabled = false}) {
+interface KeyboardProps {
+  text: string;
+  onChange: React.ChangeEventHandler;
+  disabled: boolean;
+}
+
+function Keyboard({text, onChange, disabled = false}: KeyboardProps) {
   return (
     <label htmlFor="keyboard">
       <p className="sr-only">Input</p>
@@ -147,13 +151,11 @@ function Keyboard({text, onChange, disabled = false}) {
   );
 }
 
-Keyboard.propTypes = {
-  text: PropTypes.string.isRequired,
-  onChange: PropTypes.func.isRequired,
-  disabled: PropTypes.bool,
-};
+interface TextOutputProps {
+  text: string;
+}
 
-function TextOutput({text}) {
+function TextOutput({text}: TextOutputProps) {
   return (
     <label htmlFor="output">
       <p className="sr-only">Output</p>
@@ -162,22 +164,18 @@ function TextOutput({text}) {
   );
 }
 
-TextOutput.propTypes = {
-  text: PropTypes.string.isRequired,
-};
-
 /**
  * Replace a letter with its current plugboard match
- * @param {Connections} connections
- * @param {string} text
- * @returns {string}
  */
-function encodeThroughPlugboard(connections, text) {
+function encodeThroughPlugboard(
+  connections: Connections,
+  text: string,
+): string {
   if (text.length === 0) return '';
 
   const matchedLetters = [...connections]
     .filter(([, match]) => match && ALPHABET.includes(match))
-    .reduce((acc, [plug, match]) => {
+    .reduce<Record<string, string | null>>((acc, [plug, match]) => {
       acc[plug] = match;
       return acc;
     }, {});

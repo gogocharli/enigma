@@ -1,5 +1,5 @@
 import React from 'react';
-import PropTypes from 'prop-types';
+import type {PlugState} from 'src/types';
 import {CHECKED, INDETERMINATE, UNCHECKED} from './state';
 
 /**
@@ -8,9 +8,8 @@ import {CHECKED, INDETERMINATE, UNCHECKED} from './state';
  * - Unchecked: The plug is not connected to any other
  * - Indeterminate: The plug has been selected but no match is made
  * - Checked: The plug is connected to another one
- * @param {PlugState}
  */
-export function Plug({letter, status, onChange}) {
+export function Plug({letter, status, onChange}: PlugState) {
   return (
     <label htmlFor={letter}>
       {letter}
@@ -41,9 +40,3 @@ export function Plug({letter, status, onChange}) {
     </label>
   );
 }
-
-Plug.propTypes = {
-  letter: PropTypes.string.isRequired,
-  status: PropTypes.number.isRequired,
-  onChange: PropTypes.func.isRequired,
-};
