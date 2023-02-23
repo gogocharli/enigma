@@ -7,8 +7,7 @@ type RotorContextType = [RotorState, React.Dispatch<Action>];
 const RotorContext = React.createContext<RotorContextType | null>(null);
 RotorContext.displayName = 'Rotor Context';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function RotorProvider(props: any) {
+function RotorProvider(props: {children: React.ReactNode}) {
   const [state, dispatch] = React.useReducer(
     rotorReducer,
     [1, 2, 3],

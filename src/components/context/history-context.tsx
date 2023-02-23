@@ -18,9 +18,12 @@ HistoryContext.displayName = 'History Context';
  * Storing information in session storage for persistence while
  * the page is open.
  */
-function StateHistoryProvider(props: any) {
+function StateHistoryProvider(props: {children: React.ReactNode}) {
   const [step, setStep] = useSessionStorage('__enigma-step__', -1);
-  const [history, setHistory] = useSessionStorage('__enigma-history__', []);
+  const [history, setHistory] = useSessionStorage<RotorState[]>(
+    '__enigma-history__',
+    [],
+  );
 
   return (
     <HistoryContext.Provider

@@ -11,8 +11,7 @@ PlugboardContext.displayName = 'Plugboard Context';
 
 const plugOptions = ALPHABET.split('').map((el) => [el, null]);
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function PlugboardProvider(props: any) {
+function PlugboardProvider(props: {children: React.ReactNode}) {
   const [state, setState] = React.useState(
     // @ts-expect-error map property nonsense
     () => new Map(plugOptions) as Connections,

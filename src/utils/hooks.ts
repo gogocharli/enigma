@@ -41,7 +41,7 @@ function useSessionStorage<T>(
     };
   }, [key, serialize, data]);
 
-  return [data, setStoredData];
+  return [data, setStoredData] as [T, React.Dispatch<React.SetStateAction<T>>];
 }
 
 export {useSessionStorage};
