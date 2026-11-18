@@ -32,7 +32,6 @@ export interface Rotor {
   rotorType: number;
   position: number;
   turnover: number;
-  updated: boolean;
 }
 
 /**
@@ -57,17 +56,23 @@ export interface RotorStateCache {
 }
 
 /**
- * Different reflector types
+ * Different reflector types. Only true reflectors: the entry wheel (ETW) and
+ * the M4's thin rotors (Beta, Gamma) would break the machine's guarantees.
  */
-export type Reflector =
-  | 'A'
-  | 'B'
-  | 'B-thin'
-  | 'Beta'
-  | 'C'
-  | 'C-thin'
-  | 'ETW'
-  | 'Gamma';
+export type Reflector = 'A' | 'B' | 'C' | 'B-thin' | 'C-thin';
+
+/**
+ * One step of a key press through the machine. Contacts are housing
+ * positions, from 0 (A) to 25 (Z).
+ */
+export interface TraceStage {
+  part: 'plugboard' | 'rotor' | 'reflector';
+  direction: 'forward' | 'return';
+  /** Position of the rotor in the box, 0 being the leftmost */
+  rotorIndex?: number;
+  input: number;
+  output: number;
+}
 
 /**
  * Defines a key-value pair for each plug and its match

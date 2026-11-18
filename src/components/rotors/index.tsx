@@ -1,24 +1,11 @@
 import * as React from 'react';
 import type {Reflector} from '../../types';
+import {DEFAULT_REFLECTOR, REFLECTOR_TYPES} from '../../utils/rotors';
 import {Spindle} from './spindle';
 
-/**
- * Original reflectors used for the machine
- * @see https://en.wikipedia.org/wiki/Enigma_rotor_details#Rotor_wiring_tables
- */
-const reflectorTypes = [
-  'A',
-  'B',
-  'B-thin',
-  'Beta',
-  'C',
-  'C-thin',
-  'ETW',
-  'Gamma',
-];
-
 export function RotorBox() {
-  const [reflector, setReflector] = React.useState<Reflector>('B-thin');
+  const [reflector, setReflector] =
+    React.useState<Reflector>(DEFAULT_REFLECTOR);
 
   return (
     <>
@@ -48,7 +35,7 @@ function ReflectorSelect({selected, onChange}: ReflectorSelectProps) {
     <label htmlFor="reflector">
       <p>Reflector</p>
       <select id="reflector" value={selected} onChange={onChange}>
-        {reflectorTypes.map((reflector) => (
+        {REFLECTOR_TYPES.map((reflector) => (
           <option key={reflector} value={reflector}>
             {reflector}
           </option>

@@ -1,10 +1,16 @@
 import {expect, test} from 'vitest';
-import {render, screen, fireEvent, getByRole} from '@testing-library/react';
+import {
+  render,
+  screen,
+  fireEvent,
+  getByRole,
+  within,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import App from './App';
 import {ALPHABET, ROTORS} from './utils/rotors';
 
-const DEFAULT_REFLECTOR = 'B-thin';
+const DEFAULT_REFLECTOR = 'B';
 
 test('loads correctly', () => {
   render(<App />);
@@ -78,6 +84,20 @@ test('can be reset to default state', async () => {
     expect(position).toBe('0');
     expect(Number(rotorIndex)).toBe(index + 1);
   });
+});
+
+test('a rotor can be turned back to A', () => {
+  render(<App />);
+
+  const [rotor] = screen.getAllByRole('group', {name: /rotor/i});
+  const slider = getByRole(rotor, 'slider') as HTMLInputElement;
+
+  fireEvent.change(slider, {target: {value: 5}});
+  expect(slider.value).toBe('5');
+
+  // Regression: position 0 used to be ignored as a missing value
+  fireEvent.change(slider, {target: {value: 0}});
+  expect(slider.value).toBe('0');
 });
 
 const turnovers = ROTORS.map((rotor) => ALPHABET.indexOf(rotor.turnover));
@@ -225,4 +245,15 @@ test('Encoding is transformed with the plugboard connections', async () => {
   const pluggedEncoding = output.value;
 
   expect(unpluggedEncoding).not.toBe(pluggedEncoding);
+});
+
+test('only true reflectors can be chosen', () => {
+  render(<App />);
+
+  const reflector = screen.getByRole('combobox', {name: /reflector/i});
+  const options = within(reflector)
+    .getAllByRole('option')
+    .map((option) => option.textContent);
+
+  expect(options).toEqual(['A', 'B', 'C', 'B-thin', 'C-thin']);
 });

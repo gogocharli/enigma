@@ -16,6 +16,7 @@
 import type {RotorState, Action, ActionTypes, Reflector} from '../../types';
 
 import {
+  DEFAULT_REFLECTOR,
   getRotors,
   updateRotorsPositions,
   initReflector,
@@ -46,7 +47,8 @@ function rotorReducer(state: RotorState, action: Action): RotorState {
       const {rotors: previousRotors} = state;
       const rotor = previousRotors.find(({rotorType}) => rotorType === type);
 
-      if (!rotor || !newPosition) return state;
+      // 0 (A) is a valid position, so only a missing value is ignored
+      if (!rotor || newPosition === undefined) return state;
 
       const rotorIndex = previousRotors.indexOf(rotor);
 
@@ -116,7 +118,7 @@ function initRotors(
   options: InitOptions = {},
 ): RotorState {
   const rotors = getRotors(initialTypes);
-  const {lastAction = 'init', reflector = 'B-thin'} = options;
+  const {lastAction = 'init', reflector = DEFAULT_REFLECTOR} = options;
   return {
     rotors,
     plainText: '',

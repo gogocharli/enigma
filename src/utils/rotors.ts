@@ -1,7 +1,12 @@
-import type {Reflector, Rotor} from '../types';
+import type {Connections, Reflector, Rotor, TraceStage} from '../types';
+import {swapThroughPlugboard} from './plugboard';
 
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' as const;
 
+/**
+ * Rotor wirings and the letter at which each one carries its neighbour
+ * @see https://en.wikipedia.org/wiki/Enigma_rotor_details#Rotor_wiring_tables
+ */
 const ROTORS = [
   {
     type: 'I',
@@ -30,143 +35,122 @@ const ROTORS = [
   },
 ] as const;
 
-const REFLECTORS = new Map([
-  ['A', 'EJMZALYXVBWFCRQUONTSPIKHGD'] as const,
-  ['B', 'YRUHQSLDPXNGOKMIEBFZCWVJAT'] as const,
-  ['B-thin', 'ENKQAUYWJICOPBLMDXZVFTHRGS'] as const,
-  ['Beta', 'LEYJVCNIXWPBQMDRTAKZGFUHOS'] as const,
-  ['C', 'FVPJIAOYEDRZXWGCTKUQSBNMHL'] as const,
-  ['C-thin', 'RDOBJNTKVEHMLFCWZAXGYIPSUQ'] as const,
-  ['ETW', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'] as const,
-  ['Gamma', 'FSOKANUERHMBTIYCWLQPZXVGJD'] as const,
+/**
+ * Only true reflectors belong here: each one pairs every letter with a
+ * different letter. That is what makes the machine reciprocal and stops a
+ * letter from ever encrypting to itself (both are checked in the tests).
+ */
+const REFLECTORS = new Map<Reflector, string>([
+  ['A', 'EJMZALYXVBWFCRQUONTSPIKHGD'],
+  ['B', 'YRUHQSLDPXNGOKMIEBFZCWVJAT'],
+  ['C', 'FVPJIAOYEDRZXWGCTKUQSBNMHL'],
+  ['B-thin', 'ENKQAUYWJICOPBLMDXZVFTHRGS'],
+  ['C-thin', 'RDOBJNTKVEHMLFCWZAXGYIPSUQ'],
 ]);
+
+const REFLECTOR_TYPES = [...REFLECTORS.keys()];
+
+const DEFAULT_REFLECTOR: Reflector = 'B';
+
+const wrap = (index: number) => (index + 26) % 26;
+
+/**
+ * Passes a housing contact through a rotor at its current position,
+ * towards the reflector (forward) or back from it (return)
+ */
+function throughRotor(
+  {rotorType, position}: Rotor,
+  contact: number,
+  direction: TraceStage['direction'],
+) {
+  const {cipher} = ROTORS[rotorType - 1];
+  const entry = ALPHABET[wrap(contact + position)];
+  const exit =
+    direction === 'forward'
+      ? ALPHABET.indexOf(cipher[ALPHABET.indexOf(entry)])
+      : cipher.indexOf(entry);
+  return wrap(exit - position);
+}
+
+/**
+ * Follows a key press through the whole machine, one stage at a time.
+ * Inputs and outputs are housing contacts (0 = A), so the same trace drives
+ * both the encoded letter and the signal diagram.
+ */
+function traceChar(
+  char: string,
+  rotors: Rotor[],
+  reflectorType: Reflector,
+  connections?: Connections,
+): TraceStage[] {
+  const key = ALPHABET.indexOf(char);
+  const reflector = REFLECTORS.get(reflectorType);
+  if (key === -1 || !reflector) return [];
+
+  const plug = (contact: number) =>
+    connections
+      ? ALPHABET.indexOf(swapThroughPlugboard(connections, ALPHABET[contact]))
+      : contact;
+
+  const stages: TraceStage[] = [];
+  const pass = (stage: Omit<TraceStage, 'output'>, output: number) => {
+    stages.push({...stage, output});
+    return output;
+  };
+
+  let contact = pass(
+    {part: 'plugboard', direction: 'forward', input: key},
+    plug(key),
+  );
+
+  // The signal enters on the right (fast) rotor and travels left
+  for (let index = rotors.length - 1; index >= 0; index--) {
+    contact = pass(
+      {part: 'rotor', direction: 'forward', rotorIndex: index, input: contact},
+      throughRotor(rotors[index], contact, 'forward'),
+    );
+  }
+
+  contact = pass(
+    {part: 'reflector', direction: 'return', input: contact},
+    ALPHABET.indexOf(reflector[contact]),
+  );
+
+  for (let index = 0; index < rotors.length; index++) {
+    contact = pass(
+      {part: 'rotor', direction: 'return', rotorIndex: index, input: contact},
+      throughRotor(rotors[index], contact, 'return'),
+    );
+  }
+
+  pass({part: 'plugboard', direction: 'return', input: contact}, plug(contact));
+
+  return stages;
+}
 
 /**
  * Initialize the reflector settings used for character encoding
  */
 const initReflector = (reflectorType: Reflector) => {
   /**
-   * Encodes an alphabetical character to the matching cipher caracter
+   * Encodes an alphabetical character through the rotors and reflector.
+   * The plugboard is applied separately by the board.
    */
   function encodeChar(char: string, rotors: Rotor[]) {
-    // The encoding is done from last to first (RTL)
-    const reverseRotors = [...rotors].reverse();
-
-    // Get the ciphers for the current rotor positions
-    const reversedCiphers = reverseRotors.map(extractCipher);
-
-    // Encoding produced from the input to the reflector
-    const firstPassChar = alphaToCipher(char, reverseRotors, reversedCiphers);
-
-    // Get the new characater from the reflector
-    const reflector = REFLECTORS.get(reflectorType);
-
-    if (!reflector) return '';
-
-    const reflectedChar = ALPHABET[reflector.indexOf(firstPassChar)];
-
-    // This encoding is done from first to last (LTR)
-    // Get the ciphers from the original rotor position
-    const currentCiphers = rotors.map(extractCipher);
-    const encodedChar = cipherToAlpha(reflectedChar, rotors, currentCiphers);
-
-    return encodedChar;
+    const stages = traceChar(char, rotors, reflectorType);
+    const lastStage = stages.at(-1);
+    return lastStage ? ALPHABET[lastStage.output] : '';
   }
 
   return encodeChar;
 };
 
 /**
- * Encrypts the plaintext to the character to be transferred to the reflector
- * @param char the plain text character
- * @param rotors
- * @param currentCiphers ciphers at the current rotor positions
- */
-function alphaToCipher(
-  char: string,
-  rotors: Rotor[],
-  currentCiphers: string[],
-) {
-  // The current encoded character after each rotor is derived from the "alphabet"
-  // created from the previous rotor's position.
-  const encodedChar = rotors.reduce(function (
-    inputChar,
-    _rotor,
-    current,
-    rotorsList,
-  ) {
-    const cipher = currentCiphers[current];
-    const previousRotor = rotorsList[current - 1];
-
-    // Use the alphabet from the previous rotor if there is one.
-    const position = previousRotor?.position;
-    const isFirstRotor = current === 0;
-    const currentAlphabet = isFirstRotor
-      ? ALPHABET
-      : ALPHABET.slice(position) + ALPHABET.slice(0, position);
-
-    return cipher[currentAlphabet.indexOf(inputChar)];
-  },
-  char);
-
-  return encodedChar;
-}
-
-/**
- * Encrypts the plaintext to the character to be transferred to the reflector
- * @param {string} char the plain text character
- * @param {Rotor[]} rotors
- * @param {string[]} currentCiphers ciphers at the current rotor positions
- */
-function cipherToAlpha(
-  char: string,
-  rotors: Rotor[],
-  currentCiphers: string[],
-) {
-  const charIndex = ALPHABET.indexOf(char);
-
-  const encodedCharIndex = rotors.reduce(function (
-    inputIndex,
-    {position},
-    current,
-  ) {
-    const cipher = currentCiphers[current];
-
-    // The first rotor and the reflector align with the first alphabet
-    const isFirstRotor = current === 0;
-    const currentAlphabet = isFirstRotor
-      ? ALPHABET
-      : ALPHABET.slice(position) + ALPHABET.slice(0, position);
-
-    // Which char alpha from the alphabet has the same position as the input char
-    const matchingChar = currentAlphabet[inputIndex];
-
-    // What's the index of character alpha in the cipher C of the curent form
-    const outputIndex = cipher.indexOf(matchingChar);
-    return outputIndex;
-  },
-  charIndex);
-
-  return ALPHABET[encodedCharIndex];
-}
-
-/**
- * Retrieves the current cipher of a rotor, given its position
- */
-function extractCipher({rotorType, position}: Rotor): string {
-  const {cipher: originalCipher} = ROTORS[rotorType - 1];
-  const positionedCipher =
-    originalCipher.slice(position) + originalCipher.slice(0, position);
-  return positionedCipher;
-}
-
-/**
  * Retrieves the turnover index from the rotor's type
  */
 function getTurnoverIndex(rotorType: number) {
   const {turnover} = ROTORS[rotorType - 1];
-  const turnoverIndex = ALPHABET.indexOf(turnover);
-  return turnoverIndex;
+  return ALPHABET.indexOf(turnover);
 }
 
 /**
@@ -174,55 +158,40 @@ function getTurnoverIndex(rotorType: number) {
  * @returns The selected rotors inital settings
  */
 function getRotors(rotorTypes: number[]): Rotor[] {
-  const rotors = rotorTypes.map((rotorType) => ({
+  return rotorTypes.map((rotorType) => ({
     key: ROTORS[rotorType - 1].type,
     rotorType,
     position: 0,
     turnover: getTurnoverIndex(rotorType),
-    updated: false,
   }));
-
-  return rotors;
 }
 
 /**
- * Increment the position of the rotor
+ * Steps the rotors the way the machine's pawls do when a key is pressed.
+ * The rightmost rotor always steps. A rotor sitting at its notch is pushed
+ * along with its left neighbour, which makes the middle rotor step twice in a
+ * row (the "double step").
  */
-function incrementPosition(rotor: Rotor) {
-  rotor.position += 1;
-  rotor.position %= 26;
-  rotor.updated = true;
+function updateRotorsPositions(rotors: Rotor[]): Rotor[] {
+  const atNotch = rotors.map(({position, turnover}) => position === turnover);
+  const last = rotors.length - 1;
+
+  return rotors.map((rotor, index) => {
+    const steps =
+      index === last || atNotch[index + 1] || (index > 0 && atNotch[index]);
+    return steps ? {...rotor, position: wrap(rotor.position + 1)} : rotor;
+  });
 }
 
-/**
- * Update the rotor's position depending on its position in the box
- */
-function updateTurnover(rotor: Rotor, index: number, rotorList: Rotor[]) {
-  // Always increment the last rotor's position
-  const nextRotor = rotorList[index + 1];
-  if (index === 0) {
-    incrementPosition(rotor);
-  }
-
-  // Eagerly increment next rotor when current has just been updated over its turnover
-  // This is the best way, as of now, to avoid false updates
-  if (nextRotor && rotor.updated && rotor.position === rotor.turnover + 1) {
-    incrementPosition(nextRotor);
-    rotor.updated = false;
-  }
-
-  return rotor;
-}
-
-/**
- * Update positions accurately with each type
- */
-function updateRotorsPositions(rotors: Rotor[]) {
-  // Reversing the rotors in both places is the fastest way to update them
-  // Avoid mutating the original rotors by cloning the objects
-  const newRotors = rotors.map((rotor) => ({...rotor})).reverse();
-  const newRotorState = newRotors.map(updateTurnover).reverse();
-  return newRotorState;
-}
-
-export {ALPHABET, ROTORS, initReflector, getRotors, updateRotorsPositions};
+export {
+  ALPHABET,
+  ROTORS,
+  REFLECTORS,
+  REFLECTOR_TYPES,
+  DEFAULT_REFLECTOR,
+  throughRotor,
+  traceChar,
+  initReflector,
+  getRotors,
+  updateRotorsPositions,
+};
