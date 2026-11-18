@@ -11,13 +11,14 @@ can ever encrypt to itself.
 
 ## What you can do
 
-- **Type** on the on-screen keyboard, your own keyboard, or the input field.
-  `Backspace` or **Undo** steps the machine back one key press.
+- **Type** in the input field, or anywhere on the page with your keyboard.
+  `Backspace` or **Undo** steps the machine back one key press. The lamp of
+  the encoded letter lights up.
 - **Turn the rotors** by dragging their windows, with the arrow buttons, or with
   the arrow keys once a window has focus. Swap rotor types from the menus.
 - **Choose a reflector**: A, B, C, B-thin or C-thin.
-- **Cable the plugboard** by clicking two letters. Click a cabled letter to
-  unplug it.
+- **Cable the plugboard**: open it and click two letters. Click a cabled
+  letter to unplug it. Closed, it still lists its cables.
 - **Slow motion** draws the path slowly enough to follow each step.
 - **Copy link** shares the exact setup a message started from, so someone else
   can decrypt it by typing the ciphertext.

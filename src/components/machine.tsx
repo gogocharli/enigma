@@ -16,13 +16,13 @@ import {
 import {RotorBox} from './rotors';
 import {PlugBoard} from './plugboard';
 import {SignalDiagram} from './diagram/signal-diagram';
-import {Keyboard} from './keyboard';
+import {Lampboard} from './lampboard';
 
 const TYPING_TARGETS = ['INPUT', 'TEXTAREA', 'SELECT'];
 
 /**
- * Ties the parts together. Every way of typing (on-screen keys, the
- * physical keyboard, the input field) goes through pressKey.
+ * Ties the parts together. Both ways of typing (the physical keyboard and
+ * the input field) go through pressKey.
  */
 export function Machine() {
   const [state, dispatch] = useRotorContext();
@@ -175,31 +175,58 @@ export function Machine() {
       className="machine"
       style={{'--draw': slow ? '1600ms' : '450ms'} as React.CSSProperties}
     >
-      <section className="controls" aria-label="Machine settings">
-        <RotorBox />
-        <div className="actions">
-          <button type="button" onClick={undo} disabled={step <= 0}>
-            Undo
-          </button>
-          <button type="button" onClick={reset}>
-            Reset
-          </button>
-          <button type="button" onClick={copyLink}>
-            Copy link
-          </button>
-          <label className="toggle">
-            <input
-              type="checkbox"
-              checked={slow}
-              onChange={(e) => setSlow(e.target.checked)}
+      <div className="console">
+        <section className="tape" aria-label="Message">
+          <label htmlFor="keyboard" className="input">
+            <span className="control-label">Input</span>
+            <textarea
+              name="keyboard"
+              id="keyboard"
+              rows={3}
+              spellCheck={false}
+              placeholder="Type here, or anywhere on the page"
+              value={state.plainText}
+              onChange={handleTapeChange}
+              disabled={isConnectionPending}
             />
-            Slow motion
           </label>
-        </div>
-        <p className="share-status" role="status">
-          {shareStatus}
-        </p>
-      </section>
+          <label htmlFor="output" className="output">
+            <span className="control-label">Output</span>
+            <textarea id="output" rows={3} value={encodedText} readOnly />
+          </label>
+          {isConnectionPending && (
+            <p className="hint">
+              Finish or cancel the open plugboard cable to keep typing.
+            </p>
+          )}
+        </section>
+
+        <section className="controls" aria-label="Machine settings">
+          <RotorBox />
+          <div className="actions">
+            <button type="button" onClick={undo} disabled={step <= 0}>
+              Undo
+            </button>
+            <button type="button" onClick={reset}>
+              Reset
+            </button>
+            <button type="button" onClick={copyLink}>
+              Copy link
+            </button>
+            <label className="toggle">
+              <input
+                type="checkbox"
+                checked={slow}
+                onChange={(e) => setSlow(e.target.checked)}
+              />
+              Slow motion
+            </label>
+          </div>
+          <p className="share-status" role="status">
+            {shareStatus}
+          </p>
+        </section>
+      </div>
 
       <SignalDiagram
         rotors={state.rotors}
@@ -209,38 +236,9 @@ export function Machine() {
         pressId={pressId}
       />
 
-      <Keyboard
-        lamp={lamp}
-        pressId={pressId}
-        disabled={isConnectionPending}
-        onPress={pressKey}
-      />
+      <Lampboard lamp={lamp} pressId={pressId} />
 
       <PlugBoard onToggle={togglePlug} />
-
-      <section className="tape" aria-label="Message">
-        <label htmlFor="keyboard">
-          <span className="control-label">Input</span>
-          <textarea
-            name="keyboard"
-            id="keyboard"
-            rows={2}
-            spellCheck={false}
-            value={state.plainText}
-            onChange={handleTapeChange}
-            disabled={isConnectionPending}
-          />
-        </label>
-        <label htmlFor="output">
-          <span className="control-label">Output</span>
-          <input id="output" value={encodedText} readOnly />
-        </label>
-        {isConnectionPending && (
-          <p className="hint">
-            Finish or cancel the open plugboard cable to keep typing.
-          </p>
-        )}
-      </section>
     </div>
   );
 }

@@ -36,9 +36,13 @@ function cablePath(plug: string, match: string) {
   return `M ${from.x} ${from.y} Q ${middle} ${sag} ${to.x} ${to.y}`;
 }
 
+const cableColor = (index: number) =>
+  `var(${CABLE_COLORS[index % CABLE_COLORS.length]})`;
+
 /**
  * Allows variable reconfiguration of the machine by the operator.
- * In short, each letter can be substitued by another
+ * In short, each letter can be substitued by another. Collapsed, it still
+ * lists its cables.
  * @see https://en.wikipedia.org/wiki/Enigma_machine#Plugboard
  */
 export function PlugBoard({onToggle}: {onToggle: (letter: string) => void}) {
@@ -53,47 +57,75 @@ export function PlugBoard({onToggle}: {onToggle: (letter: string) => void}) {
     return `Plug ${letter}`;
   }
 
+  // A half-made cable locks the keys, so it can't be left behind closed doors
+  function handleToggle(e: React.SyntheticEvent<HTMLDetailsElement>) {
+    if (!e.currentTarget.open && pending) onToggle(pending);
+  }
+
   return (
-    <fieldset className="plugboard">
-      <legend>Plugboard</legend>
-      <div className="plugboard-grid" style={{width: WIDTH, height: HEIGHT}}>
-        <svg
-          className="cables"
-          width={WIDTH}
-          height={HEIGHT}
-          viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
-          aria-hidden="true"
-        >
-          {pairs.map(([plug, match], index) => (
-            <path
-              key={`${plug}${match}`}
-              d={cablePath(plug, match)}
-              style={{
-                stroke: `var(${CABLE_COLORS[index % CABLE_COLORS.length]})`,
-              }}
-            />
-          ))}
-        </svg>
-        {[...SOCKETS].map(([letter, {x, y}]) => (
-          <button
-            key={letter}
-            type="button"
-            className="socket"
-            data-connected={isConnected(connections.get(letter)) || undefined}
-            aria-pressed={letter === pending}
-            aria-label={describe(letter)}
-            style={{left: x - SOCKET / 2, top: y - SOCKET / 2}}
-            onClick={() => onToggle(letter)}
+    <details className="plugboard" onToggle={handleToggle}>
+      <summary>
+        <span className="control-label">Plugboard</span>
+        {pairs.length === 0 ? (
+          <span className="plugboard-status">No cables</span>
+        ) : (
+          <>
+            <span className="sr-only">
+              {pairs.map(([plug, match]) => `${plug} to ${match}`).join(', ')}
+            </span>
+            <span className="cable-pairs" aria-hidden="true">
+              {pairs.map(([plug, match], index) => (
+                <span
+                  key={`${plug}${match}`}
+                  style={{'--cable': cableColor(index)} as React.CSSProperties}
+                >
+                  {plug}
+                  {match}
+                </span>
+              ))}
+            </span>
+          </>
+        )}
+      </summary>
+      <fieldset className="plugboard-sockets">
+        <legend className="sr-only">Plugboard sockets</legend>
+        <div className="plugboard-grid" style={{width: WIDTH, height: HEIGHT}}>
+          <svg
+            className="cables"
+            width={WIDTH}
+            height={HEIGHT}
+            viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
+            aria-hidden="true"
           >
-            {letter}
-          </button>
-        ))}
-      </div>
-      <p className="hint" aria-live="polite">
-        {pending
-          ? `Pick a letter to connect to ${pending}, or ${pending} again to cancel.`
-          : 'Click two letters to cable them together. Click a cabled letter to unplug it. Changing cables starts a new message.'}
-      </p>
-    </fieldset>
+            {pairs.map(([plug, match], index) => (
+              <path
+                key={`${plug}${match}`}
+                d={cablePath(plug, match)}
+                style={{stroke: cableColor(index)}}
+              />
+            ))}
+          </svg>
+          {[...SOCKETS].map(([letter, {x, y}]) => (
+            <button
+              key={letter}
+              type="button"
+              className="socket"
+              data-connected={isConnected(connections.get(letter)) || undefined}
+              aria-pressed={letter === pending}
+              aria-label={describe(letter)}
+              style={{left: x - SOCKET / 2, top: y - SOCKET / 2}}
+              onClick={() => onToggle(letter)}
+            >
+              {letter}
+            </button>
+          ))}
+        </div>
+        <p className="hint" aria-live="polite">
+          {pending
+            ? `Pick a letter to connect to ${pending}, or ${pending} again to cancel.`
+            : 'Click two letters to cable them together. Click a cabled letter to unplug it. Changing cables starts a new message.'}
+        </p>
+      </fieldset>
+    </details>
   );
 }

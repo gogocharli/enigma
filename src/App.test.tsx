@@ -4,6 +4,7 @@ import {
   screen,
   fireEvent,
   getByRole,
+  waitFor,
   within,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -205,10 +206,19 @@ test('rotor order can be changed', async () => {
 const plug = (plugboard: HTMLElement, letter: string) =>
   getByRole(plugboard, 'button', {name: new RegExp(`^plug ${letter}\\b`, 'i')});
 
+// The plugboard starts collapsed; its summary opens and closes it
+const plugboardToggle = () =>
+  screen.getByText('Plugboard', {selector: 'summary > span'});
+
+async function openPlugboard() {
+  await userEvent.click(plugboardToggle());
+  return screen.getByRole('group', {name: /plugboard sockets/i});
+}
+
 test('plugboard can be connected', async () => {
   render(<App />);
 
-  const plugboard = screen.getByRole('group', {name: /plugboard/i});
+  const plugboard = await openPlugboard();
 
   await userEvent.click(plug(plugboard, 'a'));
   expect(plug(plugboard, 'a')).toHaveAttribute('aria-pressed', 'true');
@@ -225,7 +235,7 @@ test('plugboard can be connected', async () => {
 test('a plugged letter can be unplugged', async () => {
   render(<App />);
 
-  const plugboard = screen.getByRole('group', {name: /plugboard/i});
+  const plugboard = await openPlugboard();
   await userEvent.click(plug(plugboard, 'a'));
   await userEvent.click(plug(plugboard, 'b'));
   await userEvent.click(plug(plugboard, 'b'));
@@ -244,10 +254,10 @@ test('Encoding is transformed with the plugboard connections', async () => {
     name: /output/i,
   }) as HTMLInputElement;
 
-  const plugboard = screen.getByRole('group', {name: /plugboard/i});
   await userEvent.type(input, 'enigma');
   const unpluggedEncoding = output.value;
 
+  const plugboard = await openPlugboard();
   await userEvent.click(plug(plugboard, 'a'));
   await userEvent.click(plug(plugboard, 'b'));
 
@@ -260,20 +270,52 @@ test('Encoding is transformed with the plugboard connections', async () => {
   expect(unpluggedEncoding).not.toBe(pluggedEncoding);
 });
 
-test('an on-screen key lights the lamp of the encoded letter', async () => {
+test('closed, the plugboard still lists its cables', async () => {
   render(<App />);
 
-  const keyboard = screen.getByRole('region', {name: /keyboard/i});
+  expect(plugboardToggle().closest('details')).not.toHaveAttribute('open');
+  expect(screen.getByText('No cables')).toBeInTheDocument();
+
+  const plugboard = await openPlugboard();
+  await userEvent.click(plug(plugboard, 'a'));
+  await userEvent.click(plug(plugboard, 'k'));
+  await userEvent.click(plugboardToggle());
+
+  expect(plugboardToggle().closest('details')).not.toHaveAttribute('open');
+  expect(screen.getByText('A to K')).toBeInTheDocument();
+});
+
+test('closing the plugboard cancels a half-made cable', async () => {
+  render(<App />);
+
+  const input = screen.getByRole('textbox', {name: /input/i});
+  const plugboard = await openPlugboard();
+  await userEvent.click(plug(plugboard, 'a'));
+  expect(input).toBeDisabled();
+
+  await userEvent.click(plugboardToggle());
+
+  await waitFor(() => expect(input).toBeEnabled());
+  expect(plug(plugboard, 'a')).toHaveAccessibleName('Plug A');
+});
+
+test('a key press lights the lamp of the encoded letter', async () => {
+  render(<App />);
+
   const output = screen.getByRole('textbox', {
     name: /output/i,
   }) as HTMLInputElement;
 
-  await userEvent.click(getByRole(keyboard, 'button', {name: 'E'}));
+  await userEvent.keyboard('e');
   const lamp = output.value.at(-1);
 
   expect(output.value).toHaveLength(1);
   expect(lamp).not.toBe('E');
-  expect(screen.getByText(`Lamp ${lamp} is lit`)).toBeInTheDocument();
+  expect(
+    within(screen.getByRole('region', {name: /lampboard/i})).getByText(
+      `Lamp ${lamp} is lit`,
+    ),
+  ).toBeInTheDocument();
 });
 
 test('the signal path ends at the lit lamp', async () => {
@@ -342,12 +384,11 @@ describe('shared links', () => {
     const positions = rotors.map(
       (rotor) => (getByRole(rotor, 'slider') as HTMLInputElement).value,
     );
-    const plugboard = screen.getByRole('group', {name: /plugboard/i});
 
     expect(types).toEqual(['2', '4', '1']);
     expect(positions).toEqual(['4', '16', '21']);
     expect(screen.getByRole('combobox', {name: /reflector/i})).toHaveValue('C');
-    expect(plug(plugboard, 'a')).toHaveAccessibleName('Plug A, connected to K');
+    expect(screen.getByText('A to K')).toBeInTheDocument();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 

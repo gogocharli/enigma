@@ -15,7 +15,6 @@
   --lamp: #ffc93c;
   --lamp-ink: #2a2000;
   --key: #13120f;
-  --key-rim: #8a8272;
   --cable-1: #b91c1c;
   --cable-2: #1d4ed8;
   --cable-3: #15803d;
@@ -60,7 +59,8 @@ body {
 /* Grid items default to min-width: auto, which would let the diagram's
    minimum width stretch the whole page on narrow screens */
 .App > *,
-.machine > * {
+.machine > *,
+.console > * {
   min-width: 0;
 }
 
@@ -133,11 +133,17 @@ textarea {
   gap: 24px;
 }
 
+/* The message and the settings: stacked on small screens, side by side on
+   larger ones, where the settings card only takes the width it needs */
+.console {
+  display: grid;
+  gap: 16px 24px;
+}
+
 .controls {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 16px 32px;
+  display: grid;
+  align-content: start;
+  gap: 16px;
   padding: 16px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -147,8 +153,18 @@ textarea {
 .rotor-box {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
+  align-items: flex-start;
   gap: 16px 24px;
+}
+
+@media (min-width: 720px) {
+  .console {
+    grid-template-columns: minmax(0, 1fr) min-content;
+  }
+
+  .rotor-box {
+    flex-wrap: nowrap;
+  }
 }
 
 select {
@@ -263,7 +279,6 @@ select {
 }
 
 .share-status {
-  flex-basis: 100%;
   margin: 0;
   font-size: 0.875rem;
   color: var(--muted);
@@ -442,46 +457,40 @@ select {
   color: var(--muted);
 }
 
-/* ---------- Lampboard and keyboard ---------- */
+/* ---------- Lampboard ---------- */
 
-.keyboard {
-  --size: min(34px, 8.6vw);
-  --gap: min(8px, 1.6vw);
-  display: grid;
-  justify-items: center;
-  gap: 20px;
-  padding: 24px 12px;
+.lampboard {
+  container-type: inline-size;
+  padding: 20px 12px;
   border-radius: var(--radius);
   background: var(--body);
 }
 
-.lampboard,
-.keys {
+/* Lamps shrink with the board so a row of nine always fits */
+.lamps {
+  --gap: min(10px, 2cqi);
+  --size: min(40px, (100cqi - 8 * var(--gap)) / 9);
   display: grid;
   justify-items: center;
   gap: var(--gap);
 }
 
-.key-row {
+.lamp-row {
   display: flex;
   gap: var(--gap);
 }
 
-.lamp,
-.key {
+.lamp {
   width: var(--size);
   height: var(--size);
   display: grid;
   place-items: center;
   border-radius: 50%;
-  font-family: var(--mono);
-  font-size: 0.8rem;
-  font-weight: 700;
-}
-
-.lamp {
   background: var(--lamp-off);
   color: var(--lamp-off-ink);
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  font-weight: 700;
 }
 
 .lamp[data-lit] {
@@ -489,41 +498,79 @@ select {
   animation-delay: calc(var(--draw) * 2);
 }
 
-.key {
-  padding: 0;
-  border: 2px solid var(--key-rim);
-  background: var(--key);
-  color: var(--body-ink);
-  cursor: pointer;
-  transition: transform 80ms ease-out;
-}
-
-.key:active:not(:disabled) {
-  transform: translateY(2px);
-}
-
-.key:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
 /* ---------- Plugboard ---------- */
 
 .plugboard {
-  margin: 0;
-  padding: 12px 16px 16px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--surface);
 }
 
-.plugboard legend {
-  padding: 0 4px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+.plugboard summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 12px 16px;
+  list-style: none;
+  cursor: pointer;
+}
+
+.plugboard summary::-webkit-details-marker {
+  display: none;
+}
+
+.plugboard summary .control-label {
+  margin: 0;
+}
+
+/* Chevron, pointing down once open */
+.plugboard summary::after {
+  content: '';
+  width: 7px;
+  height: 7px;
+  margin-left: auto;
+  border-right: 2px solid var(--muted);
+  border-bottom: 2px solid var(--muted);
+  transform: translateY(-2px) rotate(45deg);
+  transition: transform 160ms ease-out;
+}
+
+.plugboard:not([open]) summary::after {
+  transform: rotate(-45deg);
+}
+
+.plugboard summary:hover::after {
+  border-color: var(--ink);
+}
+
+.plugboard-status {
+  font-size: 0.875rem;
   color: var(--muted);
+}
+
+.cable-pairs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.cable-pairs span {
+  padding: 1px 6px;
+  border: 1.5px solid var(--cable);
+  border-radius: 6px;
+  color: var(--cable);
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.plugboard-sockets {
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0 16px 16px;
+  border: none;
 }
 
 .plugboard-grid {
@@ -575,20 +622,40 @@ select {
 
 /* ---------- Message tape ---------- */
 
+/* Input above output; the two fields share the height of the settings
+   card beside them */
 .tape {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .tape label {
-  display: block;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
-.tape textarea,
-.tape input {
+/* Keys take the forward colour and lamps the return one, as in the diagram */
+.tape .control-label::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: var(--forward);
+}
+
+.tape .output .control-label::before {
+  background: var(--return);
+}
+
+.tape textarea {
+  flex: 1;
   box-sizing: border-box;
   width: 100%;
+  min-height: 4.5rem;
   padding: 10px 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -596,14 +663,19 @@ select {
   font-family: var(--mono);
   font-size: 1rem;
   letter-spacing: 0.12em;
+  resize: none;
 }
 
-.tape textarea {
-  resize: vertical;
+.tape textarea::placeholder {
+  letter-spacing: normal;
+  color: var(--muted);
+}
+
+.tape .output textarea {
+  background: var(--paper);
 }
 
 .tape .hint {
-  grid-column: 1 / -1;
   margin: 0;
 }
 
@@ -668,7 +740,7 @@ select {
     animation: none;
   }
 
-  .key {
+  .plugboard summary::after {
     transition: none;
   }
 }

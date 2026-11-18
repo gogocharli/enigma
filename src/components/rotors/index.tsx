@@ -24,7 +24,13 @@ export function RotorBox() {
   return (
     <div className="rotor-box">
       <ReflectorSelect selected={reflector} onChange={handleReflectorChange} />
-      <Spindle />
+      <div>
+        {/* Each rotor is already named; this heading is only visual */}
+        <span className="control-label" aria-hidden="true">
+          Rotors
+        </span>
+        <Spindle />
+      </div>
     </div>
   );
 }
