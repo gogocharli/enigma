@@ -1,5 +1,5 @@
 import * as React from 'react';
-import type {RotorState, Action} from 'src/types';
+import type {RotorState, Action} from '../../types';
 import {rotorReducer, initRotors} from './reducer';
 
 type RotorContextType = [RotorState, React.Dispatch<Action>];

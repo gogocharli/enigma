@@ -13,7 +13,7 @@
 |
 */
 
-import type {RotorState, Action, ActionTypes, Reflector} from 'src/types';
+import type {RotorState, Action, ActionTypes, Reflector} from '../../types';
 
 import {
   getRotors,

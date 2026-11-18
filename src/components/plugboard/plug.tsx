@@ -1,5 +1,5 @@
 import React from 'react';
-import type {PlugState} from 'src/types';
+import type {PlugState} from '../../types';
 import {CHECKED, INDETERMINATE, UNCHECKED} from './state';
 
 /**

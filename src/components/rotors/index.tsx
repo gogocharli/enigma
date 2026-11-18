@@ -1,5 +1,5 @@
 import * as React from 'react';
-import {Reflector} from 'src/types';
+import type {Reflector} from '../../types';
 import {Spindle} from './spindle';
 
 /**

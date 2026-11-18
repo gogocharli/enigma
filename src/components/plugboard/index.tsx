@@ -3,7 +3,7 @@ import {ALPHABET} from '../../utils/rotors';
 import {usePlugboardContext} from '../context';
 import {CHECKED, INDETERMINATE, UNCHECKED, PENDING} from './state';
 import {Plug} from './plug';
-import type {Connections} from 'src/types';
+import type {Connections} from '../../types';
 
 const plugOptions = ALPHABET.split('');
 /**

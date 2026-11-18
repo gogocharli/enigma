@@ -1,4 +1,4 @@
-import type {Reflector, Rotor} from 'src/types';
+import type {Reflector, Rotor} from '../types';
 
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' as const;
 

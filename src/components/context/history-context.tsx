@@ -1,5 +1,5 @@
 import * as React from 'react';
-import type {RotorState} from 'src/types';
+import type {RotorState} from '../../types';
 import {useSessionStorage} from '../../utils/hooks';
 
 interface HistoryContextType {

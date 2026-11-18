@@ -1,5 +1,5 @@
 import * as React from 'react';
-import type {Connections} from 'src/types';
+import type {Connections} from '../types';
 import {ALPHABET} from '../utils/rotors';
 import {PENDING} from './plugboard/state';
 import {
