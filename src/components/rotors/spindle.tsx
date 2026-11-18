@@ -1,18 +1,17 @@
 import * as React from 'react';
-import type {Reflector} from '../../types';
 import {useRotorContext} from '../context/index';
 import {Rotor} from './rotor';
 
 /**
  * Renders and handle swapping out the rotors.
- * Passing the reflector to conserve its type when
- * changing the setup
+ * Choosing a rotor that's already in the box swaps the two, so the same
+ * rotor can never be placed twice.
  */
-export function Spindle({reflector = 'B'}: {reflector: Reflector}) {
-  const [{rotors}, dispatch] = useRotorContext();
-  const [types, setTypes] = React.useState([1, 2, 3]);
+export function Spindle() {
+  const [{rotors, reflector}, dispatch] = useRotorContext();
+  const types = rotors.map(({rotorType}) => rotorType);
 
-  function handleSelectionCHange(currentType: number) {
+  function handleSelectionChange(currentType: number) {
     return function changeTypes(e: React.ChangeEvent<HTMLSelectElement>) {
       const selected = Number(e.target.value);
       const targetIndex = types.indexOf(currentType);
@@ -28,25 +27,20 @@ export function Spindle({reflector = 'B'}: {reflector: Reflector}) {
         newTypes.splice(targetIndex, 1, selected);
       }
 
-      setTypes(newTypes);
+      dispatch({type: 'setup', payload: {types: newTypes, reflector}});
     };
   }
 
-  React.useEffect(() => {
-    const payload = {types, reflector};
-    dispatch({type: 'setup', payload});
-  }, [dispatch, types, reflector]);
-
   return (
-    <>
+    <div className="spindle">
       {rotors.map(({rotorType, position, key}) => (
         <Rotor
           key={key}
           type={rotorType}
           position={position}
-          onChange={handleSelectionCHange}
+          onChange={handleSelectionChange}
         />
       ))}
-    </>
+    </div>
   );
 }

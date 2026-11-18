@@ -1,5 +1,5 @@
 import * as React from 'react';
-import type {RotorState, Action} from '../../types';
+import type {RotorState, Action, MachineSetup} from '../../types';
 import {rotorReducer, initRotors} from './reducer';
 
 type RotorContextType = [RotorState, React.Dispatch<Action>];
@@ -7,13 +7,24 @@ type RotorContextType = [RotorState, React.Dispatch<Action>];
 const RotorContext = React.createContext<RotorContextType | null>(null);
 RotorContext.displayName = 'Rotor Context';
 
-function RotorProvider(props: {children: React.ReactNode}) {
-  const [state, dispatch] = React.useReducer(
-    rotorReducer,
-    [1, 2, 3],
-    initRotors,
+function RotorProvider({
+  setup,
+  children,
+}: {
+  setup: MachineSetup;
+  children: React.ReactNode;
+}) {
+  const [state, dispatch] = React.useReducer(rotorReducer, setup, (initial) =>
+    initRotors(initial.types, {
+      reflector: initial.reflector,
+      positions: initial.positions,
+    }),
   );
-  return <RotorContext.Provider value={[state, dispatch]} {...props} />;
+  return (
+    <RotorContext.Provider value={[state, dispatch]}>
+      {children}
+    </RotorContext.Provider>
+  );
 }
 
 /**

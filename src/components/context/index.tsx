@@ -12,6 +12,7 @@
 */
 
 import * as React from 'react';
+import type {MachineSetup} from '../../types';
 
 import {RotorProvider} from './rotor-context';
 import {StateHistoryProvider} from './history-context';
@@ -20,11 +21,19 @@ import {PlugboardProvider} from './plugboard-context';
 /**
  * Unique provider dispatching all context providers from the app
  */
-function AppProviders({children}: {children: React.ReactNode}) {
+function AppProviders({
+  setup,
+  children,
+}: {
+  setup: MachineSetup;
+  children: React.ReactNode;
+}) {
   return (
-    <RotorProvider>
+    <RotorProvider setup={setup}>
       <StateHistoryProvider>
-        <PlugboardProvider>{children}</PlugboardProvider>
+        <PlugboardProvider initialConnections={setup.connections}>
+          {children}
+        </PlugboardProvider>
       </StateHistoryProvider>
     </RotorProvider>
   );

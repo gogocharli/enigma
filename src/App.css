@@ -1,19 +1,676 @@
+:root {
+  color-scheme: light dark;
+  --paper: #f3efe6;
+  --surface: #fbf9f4;
+  --ink: #1f1c16;
+  --muted: #6f685c;
+  --line: #d8d0bf;
+  --wire: #b9ae98;
+  --forward: #c2410c;
+  --return: #0f6e86;
+  --body: #23211c;
+  --body-ink: #f3efe6;
+  --lamp-off: #3b382f;
+  --lamp-off-ink: #8c8578;
+  --lamp: #ffc93c;
+  --lamp-ink: #2a2000;
+  --key: #13120f;
+  --key-rim: #8a8272;
+  --cable-1: #b91c1c;
+  --cable-2: #1d4ed8;
+  --cable-3: #15803d;
+  --cable-4: #7e22ce;
+  --mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --radius: 12px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #14130f;
+    --surface: #1d1b16;
+    --ink: #ece6d8;
+    --muted: #a39b8b;
+    --line: #3a362d;
+    --wire: #575043;
+    --forward: #fb923c;
+    --return: #38bdf8;
+    --body: #0d0c0a;
+    --lamp-off: #2a2822;
+    --lamp-off-ink: #6e685c;
+    --cable-1: #f87171;
+    --cable-2: #60a5fa;
+    --cable-3: #4ade80;
+    --cable-4: #c084fc;
+  }
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+}
+
 .App {
-  text-align: center;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 32px 16px 64px;
+  display: grid;
+  gap: 24px;
+}
+
+/* Grid items default to min-width: auto, which would let the diagram's
+   minimum width stretch the whole page on narrow screens */
+.App > *,
+.machine > * {
+  min-width: 0;
+}
+
+.intro h1 {
+  margin: 0 0 8px;
+  font-size: 2rem;
+  letter-spacing: -0.02em;
+}
+
+.intro p {
+  margin: 0;
+  max-width: 62ch;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+button,
+select,
+input,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--forward);
+  outline-offset: 2px;
+}
+
+.control-label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.hint {
+  margin: 8px 0 0;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+/* ---------- Notice for invalid links ---------- */
+
+.notice {
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--forward);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.notice p {
+  margin: 0 0 8px;
+}
+
+.notice ul {
+  margin: 0 0 12px;
+  padding-left: 20px;
+}
+
+/* ---------- Machine ---------- */
+
+.machine {
+  --draw: 450ms;
+  display: grid;
+  gap: 24px;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 16px 32px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.rotor-box {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 16px 24px;
+}
+
+select {
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper);
+}
+
+.spindle {
+  display: flex;
+  gap: 12px;
+}
+
+.rotor {
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.rotor-turn {
+  width: 52px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--muted);
+  font-size: 0.7rem;
+  line-height: 1.6;
+  cursor: pointer;
+}
+
+.rotor-turn:hover {
+  color: var(--ink);
+}
+
+.rotor-window {
+  position: relative;
+  width: 52px;
+  height: 84px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: var(--key);
+  color: var(--body-ink);
+  font-family: var(--mono);
+  cursor: ns-resize;
+  touch-action: none;
+  user-select: none;
+  box-shadow:
+    inset 0 10px 12px -8px rgb(0 0 0 / 0.8),
+    inset 0 -10px 12px -8px rgb(0 0 0 / 0.8);
+}
+
+.rotor-window:focus-within {
+  outline: 2px solid var(--forward);
+  outline-offset: 3px;
+}
+
+.rotor-letter {
+  font-size: 0.8rem;
+  line-height: 1.6;
+  opacity: 0.4;
+}
+
+.rotor-letter.current {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.2;
+  opacity: 1;
+  animation: pop 180ms ease-out;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.actions button,
+.notice button {
+  padding: 8px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper);
+  cursor: pointer;
+}
+
+.actions button:hover:not(:disabled),
+.notice button:hover {
+  border-color: var(--muted);
+}
+
+.actions button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 4px;
+  font-size: 0.875rem;
+}
+
+.share-status {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.share-status:empty {
+  display: none;
+}
+
+/* ---------- Signal diagram ---------- */
+
+.signal {
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.signal-scroll {
+  overflow-x: auto;
+}
+
+.signal-diagram {
+  display: block;
+  width: 100%;
+  min-width: 600px;
+  height: auto;
+}
+
+.signal-diagram text {
+  font-family: var(--mono);
+}
+
+.column-label {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  fill: var(--muted);
+}
+
+.column-value {
+  font-size: 16px;
+  font-weight: 700;
+  fill: var(--ink);
+  animation: pop 180ms ease-out;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.housing {
+  fill: var(--paper);
+  stroke: var(--line);
+}
+
+.wiring path,
+.wiring line {
+  fill: none;
+  stroke: var(--wire);
+  stroke-width: 1;
+  opacity: 0.6;
+}
+
+.rotor-wiring {
+  animation: fade-in 220ms ease-out;
+}
+
+.contact-letter {
+  font-size: 11px;
+  fill: var(--muted);
+}
+
+.contact-letter[data-key] {
+  font-weight: 700;
+  fill: var(--forward);
+}
+
+.contact-letter[data-lamp] {
+  font-weight: 700;
+  animation: lamp-letter 140ms ease-out forwards;
+  animation-delay: calc(var(--draw) * 2);
+}
+
+@keyframes lamp-letter {
+  to {
+    fill: var(--return);
+  }
+}
+
+.trace .trace-path {
+  fill: none;
+  stroke-width: 2.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: draw var(--draw) ease-in-out forwards;
+}
+
+.trace-path.forward {
+  stroke: var(--forward);
+}
+
+.trace-path.return {
+  stroke: var(--return);
+  animation-delay: var(--draw);
+}
+
+.gap-label {
+  opacity: 0;
+  animation: fade-in 160ms ease-out forwards;
+  animation-delay: calc(var(--order) * var(--draw) * 0.22);
+}
+
+.gap-label circle {
+  fill: var(--surface);
+  stroke-width: 1.5;
+}
+
+.gap-label text {
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.gap-label.forward circle {
+  stroke: var(--forward);
+}
+
+.gap-label.forward text {
+  fill: var(--forward);
+}
+
+.gap-label.return circle {
+  stroke: var(--return);
+}
+
+.gap-label.return text {
+  fill: var(--return);
+}
+
+.trace-caption {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+  margin: 12px 4px 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.trace-caption li + li::before {
+  content: '→';
+  margin-right: 6px;
+}
+
+.trace-caption b {
+  font-family: var(--mono);
+  color: var(--ink);
+}
+
+.trace-caption li:first-child b,
+.trace-caption li.forward b {
+  color: var(--forward);
+}
+
+.trace-caption li.return b,
+.trace-caption li.lamp-step b {
+  color: var(--return);
+}
+
+.caption-empty {
+  margin: 12px 4px 0;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+/* ---------- Lampboard and keyboard ---------- */
+
+.keyboard {
+  --size: min(34px, 8.6vw);
+  --gap: min(8px, 1.6vw);
+  display: grid;
+  justify-items: center;
+  gap: 20px;
+  padding: 24px 12px;
+  border-radius: var(--radius);
+  background: var(--body);
+}
+
+.lampboard,
+.keys {
+  display: grid;
+  justify-items: center;
+  gap: var(--gap);
+}
+
+.key-row {
+  display: flex;
+  gap: var(--gap);
+}
+
+.lamp,
+.key {
+  width: var(--size);
+  height: var(--size);
   display: grid;
   place-items: center;
-  padding-top: 20vh;
-  gap: 2rem;
+  border-radius: 50%;
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  font-weight: 700;
 }
 
-.App code {
-  background: #fff3;
-  padding: 4px 8px;
-  border-radius: 4px;
+.lamp {
+  background: var(--lamp-off);
+  color: var(--lamp-off-ink);
 }
 
-.App p {
-  margin: 0.4rem;
+.lamp[data-lit] {
+  animation: lamp-on 140ms ease-out forwards;
+  animation-delay: calc(var(--draw) * 2);
+}
+
+.key {
+  padding: 0;
+  border: 2px solid var(--key-rim);
+  background: var(--key);
+  color: var(--body-ink);
+  cursor: pointer;
+  transition: transform 80ms ease-out;
+}
+
+.key:active:not(:disabled) {
+  transform: translateY(2px);
+}
+
+.key:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ---------- Plugboard ---------- */
+
+.plugboard {
+  margin: 0;
+  padding: 12px 16px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.plugboard legend {
+  padding: 0 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.plugboard-grid {
+  position: relative;
+  margin: 8px auto 0;
+}
+
+.cables {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.cables path {
+  fill: none;
+  stroke-width: 3;
+  stroke-linecap: round;
+  animation: fade-in 200ms ease-out;
+}
+
+.socket {
+  position: absolute;
+  z-index: 1;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 2px solid var(--line);
+  border-radius: 50%;
+  background: var(--paper);
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.socket:hover {
+  border-color: var(--muted);
+}
+
+.socket[data-connected] {
+  border-color: var(--ink);
+}
+
+.socket[aria-pressed='true'] {
+  border-color: var(--forward);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--forward) 30%, transparent);
+}
+
+/* ---------- Message tape ---------- */
+
+.tape {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px 16px;
+}
+
+.tape label {
+  display: block;
+}
+
+.tape textarea,
+.tape input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  font-family: var(--mono);
+  font-size: 1rem;
+  letter-spacing: 0.12em;
+}
+
+.tape textarea {
+  resize: vertical;
+}
+
+.tape .hint {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+/* ---------- Motion ---------- */
+
+@keyframes draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pop {
+  from {
+    transform: translateY(-4px);
+    opacity: 0.4;
+  }
+}
+
+@keyframes lamp-on {
+  to {
+    background: var(--lamp);
+    color: var(--lamp-ink);
+    box-shadow: 0 0 14px 2px color-mix(in srgb, var(--lamp) 55%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .trace .trace-path {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+
+  .gap-label {
+    animation: none;
+    opacity: 1;
+  }
+
+  .lamp[data-lit] {
+    animation: none;
+    background: var(--lamp);
+    color: var(--lamp-ink);
+  }
+
+  .contact-letter[data-lamp] {
+    animation: none;
+    fill: var(--return);
+  }
+
+  .rotor-letter.current,
+  .column-value,
+  .rotor-wiring,
+  .cables path {
+    animation: none;
+  }
+
+  .key {
+    transition: none;
+  }
 }
 
 /* @see https://gist.github.com/ffoodd/000b59f431e3e64e4ce1a24d5bb36034 */
@@ -29,25 +686,4 @@
   position: absolute !important;
   width: 1px !important;
   white-space: nowrap !important; /* 3 */
-}
-
-/*
-	Use in conjunction with .sr-only to only display content when it's focused.
-	@note Useful for skip links 
-	@see http://www.w3.org/TR/2013/NOTE-WCAG20-TECHS-20130905/G1
-	@note Based on a HTML5 Boilerplate technique, included in Bootstrap
-	@note Fixed a bug with position: static on iOS 10.0.2 + VoiceOver
-		@author Sylvain Pigeard
-		@see https://github.com/twbs/bootstrap/issues/20732
-*/
-.sr-only-focusable:focus,
-.sr-only-focusable:active {
-  clip: auto !important;
-  -webkit-clip-path: none !important;
-  clip-path: none !important;
-  height: auto !important;
-  margin: auto !important;
-  overflow: visible !important;
-  width: auto !important;
-  white-space: normal !important;
 }

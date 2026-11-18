@@ -1,4 +1,4 @@
-import {expect, test} from 'vitest';
+import {afterEach, describe, expect, test} from 'vitest';
 import {
   render,
   screen,
@@ -202,23 +202,36 @@ test('rotor order can be changed', async () => {
   );
 });
 
+const plug = (plugboard: HTMLElement, letter: string) =>
+  getByRole(plugboard, 'button', {name: new RegExp(`^plug ${letter}\\b`, 'i')});
+
 test('plugboard can be connected', async () => {
   render(<App />);
 
   const plugboard = screen.getByRole('group', {name: /plugboard/i});
 
-  await userEvent.click(getByRole(plugboard, 'checkbox', {name: /a/i}));
-  expect(
-    getByRole(plugboard, 'checkbox', {name: /a/i}) as HTMLInputElement,
-  ).not.toBeChecked();
-  expect(
-    (getByRole(plugboard, 'checkbox', {name: /a/i}) as HTMLInputElement)
-      .indeterminate,
-  ).toBe(true);
+  await userEvent.click(plug(plugboard, 'a'));
+  expect(plug(plugboard, 'a')).toHaveAttribute('aria-pressed', 'true');
+  expect(plug(plugboard, 'a')).toHaveAccessibleName(
+    'Plug A, waiting for a partner',
+  );
 
-  await userEvent.click(getByRole(plugboard, 'checkbox', {name: /b/i}));
-  expect(getByRole(plugboard, 'checkbox', {name: /a/i})).toBeChecked();
-  expect(getByRole(plugboard, 'checkbox', {name: /b/i})).toBeChecked();
+  await userEvent.click(plug(plugboard, 'b'));
+  expect(plug(plugboard, 'a')).toHaveAccessibleName('Plug A, connected to B');
+  expect(plug(plugboard, 'b')).toHaveAccessibleName('Plug B, connected to A');
+  expect(plug(plugboard, 'a')).toHaveAttribute('aria-pressed', 'false');
+});
+
+test('a plugged letter can be unplugged', async () => {
+  render(<App />);
+
+  const plugboard = screen.getByRole('group', {name: /plugboard/i});
+  await userEvent.click(plug(plugboard, 'a'));
+  await userEvent.click(plug(plugboard, 'b'));
+  await userEvent.click(plug(plugboard, 'b'));
+
+  expect(plug(plugboard, 'a')).toHaveAccessibleName('Plug A');
+  expect(plug(plugboard, 'b')).toHaveAccessibleName('Plug B');
 });
 
 test('Encoding is transformed with the plugboard connections', async () => {
@@ -235,8 +248,8 @@ test('Encoding is transformed with the plugboard connections', async () => {
   await userEvent.type(input, 'enigma');
   const unpluggedEncoding = output.value;
 
-  await userEvent.click(getByRole(plugboard, 'checkbox', {name: /a/i}));
-  await userEvent.click(getByRole(plugboard, 'checkbox', {name: /b/i}));
+  await userEvent.click(plug(plugboard, 'a'));
+  await userEvent.click(plug(plugboard, 'b'));
 
   expect(input.value).toBeFalsy();
   expect(output.value).toBeFalsy();
@@ -245,6 +258,57 @@ test('Encoding is transformed with the plugboard connections', async () => {
   const pluggedEncoding = output.value;
 
   expect(unpluggedEncoding).not.toBe(pluggedEncoding);
+});
+
+test('an on-screen key lights the lamp of the encoded letter', async () => {
+  render(<App />);
+
+  const keyboard = screen.getByRole('region', {name: /keyboard/i});
+  const output = screen.getByRole('textbox', {
+    name: /output/i,
+  }) as HTMLInputElement;
+
+  await userEvent.click(getByRole(keyboard, 'button', {name: 'E'}));
+  const lamp = output.value.at(-1);
+
+  expect(output.value).toHaveLength(1);
+  expect(lamp).not.toBe('E');
+  expect(screen.getByText(`Lamp ${lamp} is lit`)).toBeInTheDocument();
+});
+
+test('the signal path ends at the lit lamp', async () => {
+  render(<App />);
+
+  const input = screen.getByRole('textbox', {name: /input/i});
+  const output = screen.getByRole('textbox', {
+    name: /output/i,
+  }) as HTMLInputElement;
+
+  await userEvent.type(input, 'hello');
+  const path = screen.getByRole('list', {name: /signal path/i});
+  const steps = within(path).getAllByRole('listitem');
+
+  // key, plugboard, 3 rotors, reflector, 3 rotors, plugboard, lamp
+  expect(steps).toHaveLength(11);
+  expect(steps[0]).toHaveTextContent('key O');
+  expect(steps.at(-1)).toHaveTextContent(`lamp ${output.value.at(-1)}`);
+  expect(
+    screen.getByRole('img', {name: /signal path for key o/i}),
+  ).toBeInTheDocument();
+});
+
+test('typing on the page presses the machine keys', async () => {
+  render(<App />);
+
+  const output = screen.getByRole('textbox', {
+    name: /output/i,
+  }) as HTMLInputElement;
+
+  await userEvent.keyboard('ab');
+  expect(output.value).toHaveLength(2);
+
+  await userEvent.keyboard('{Backspace}');
+  expect(output.value).toHaveLength(1);
 });
 
 test('only true reflectors can be chosen', () => {
@@ -256,4 +320,49 @@ test('only true reflectors can be chosen', () => {
     .map((option) => option.textContent);
 
   expect(options).toEqual(['A', 'B', 'C', 'B-thin', 'C-thin']);
+});
+
+describe('shared links', () => {
+  afterEach(() => {
+    window.history.replaceState({}, '', '/');
+  });
+
+  test('a valid link sets the machine up', () => {
+    window.history.replaceState(
+      {},
+      '',
+      '/?rotors=II,IV,I&pos=EQV&reflector=C&plugs=AK',
+    );
+    render(<App />);
+
+    const rotors = screen.getAllByRole('group', {name: /rotor/i});
+    const types = rotors.map(
+      (rotor) => (getByRole(rotor, 'combobox') as HTMLSelectElement).value,
+    );
+    const positions = rotors.map(
+      (rotor) => (getByRole(rotor, 'slider') as HTMLInputElement).value,
+    );
+    const plugboard = screen.getByRole('group', {name: /plugboard/i});
+
+    expect(types).toEqual(['2', '4', '1']);
+    expect(positions).toEqual(['4', '16', '21']);
+    expect(screen.getByRole('combobox', {name: /reflector/i})).toHaveValue('C');
+    expect(plug(plugboard, 'a')).toHaveAccessibleName('Plug A, connected to K');
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  test('an invalid link explains itself and keeps the default setup', () => {
+    window.history.replaceState({}, '', '/?rotors=I,I,II&plugs=AB,BC');
+    render(<App />);
+
+    const alert = screen.getByRole('alert');
+    expect(alert).toHaveTextContent('Rotor I is used twice');
+    expect(alert).toHaveTextContent('B has more than one cable');
+
+    const rotors = screen.getAllByRole('group', {name: /rotor/i});
+    const types = rotors.map(
+      (rotor) => (getByRole(rotor, 'combobox') as HTMLSelectElement).value,
+    );
+    expect(types).toEqual(['1', '2', '3']);
+  });
 });

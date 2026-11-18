@@ -1,150 +1,99 @@
-import React from 'react';
-import {ALPHABET} from '../../utils/rotors';
+import * as React from 'react';
 import {usePlugboardContext} from '../context';
-import {CHECKED, INDETERMINATE, UNCHECKED, PENDING} from './state';
-import {Plug} from './plug';
-import type {Connections} from '../../types';
+import {getPairs, getPendingPlug, isConnected} from '../../utils/plugboard';
 
-const plugOptions = ALPHABET.split('');
+/** The plugboard follows the keyboard's QWERTZ layout, like the original */
+const ROWS = ['QWERTZUIO', 'ASDFGHJK', 'PYXCVBNML'];
+const PITCH = 36;
+const ROW_HEIGHT = 46;
+const SOCKET = 30;
+const WIDTH = ROWS[0].length * PITCH;
+const HEIGHT = ROWS.length * ROW_HEIGHT;
+
+const CABLE_COLORS = ['--cable-1', '--cable-2', '--cable-3', '--cable-4'];
+
+/** Centre of each socket, shared by the buttons and the cables */
+const SOCKETS = new Map(
+  ROWS.flatMap((row, rowIndex) =>
+    [...row].map((letter, column) => {
+      const offset = rowIndex === 1 ? PITCH / 2 : 0;
+      return [
+        letter,
+        {
+          x: offset + column * PITCH + PITCH / 2,
+          y: rowIndex * ROW_HEIGHT + SOCKET / 2 + 4,
+        },
+      ] as const;
+    }),
+  ),
+);
+
+function cablePath(plug: string, match: string) {
+  const from = SOCKETS.get(plug)!;
+  const to = SOCKETS.get(match)!;
+  const sag = Math.max(from.y, to.y) + 18 + Math.abs(from.x - to.x) / 8;
+  const middle = (from.x + to.x) / 2;
+  return `M ${from.x} ${from.y} Q ${middle} ${sag} ${to.x} ${to.y}`;
+}
+
 /**
  * Allows variable reconfiguration of the machine by the operator.
  * In short, each letter can be substitued by another
  * @see https://en.wikipedia.org/wiki/Enigma_machine#Plugboard
  */
-export function PlugBoard() {
-  const [connections, setConnections] = usePlugboardContext();
+export function PlugBoard({onToggle}: {onToggle: (letter: string) => void}) {
+  const [connections] = usePlugboardContext();
+  const pending = getPendingPlug(connections);
+  const pairs = getPairs(connections);
 
-  function handleConnectionChange(event: React.ChangeEvent<HTMLInputElement>) {
-    event.preventDefault();
-    const currentPlug = event.target.id;
-    let match: string | null | undefined = null;
-
-    match = connections.get(currentPlug);
-
-    // Remove the connection if it existed before
-    // Remove the pending state if the current target is already pending
-    if (match === PENDING || isChecked(match)) {
-      removeConnection(setConnections, currentPlug, match);
-      return;
-    }
-
-    // Check if any other connection is pending
-    [match] =
-      Array.from(connections).find(([, status]) => status === PENDING) ?? [];
-
-    // Make the connection if another pending state exists
-    if (match) {
-      makeConnection(setConnections, currentPlug, match);
-      return;
-    }
-
-    // If no pending state, assing the current one to pending
-    initConnection(setConnections, currentPlug);
-  }
-
-  function isChecked(match: string | null | undefined): match is string {
-    return !!match && ALPHABET.includes(match);
+  function describe(letter: string) {
+    const match = connections.get(letter);
+    if (letter === pending) return `Plug ${letter}, waiting for a partner`;
+    if (isConnected(match)) return `Plug ${letter}, connected to ${match}`;
+    return `Plug ${letter}`;
   }
 
   return (
     <fieldset className="plugboard">
-      <legend>Plugboard Settings</legend>
-      {plugOptions.map((letter) => (
-        <Plug
-          letter={letter}
-          status={getStatus(connections.get(letter) ?? null)}
-          onChange={handleConnectionChange}
-          key={letter}
-        />
-      ))}
+      <legend>Plugboard</legend>
+      <div className="plugboard-grid" style={{width: WIDTH, height: HEIGHT}}>
+        <svg
+          className="cables"
+          width={WIDTH}
+          height={HEIGHT}
+          viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
+          aria-hidden="true"
+        >
+          {pairs.map(([plug, match], index) => (
+            <path
+              key={`${plug}${match}`}
+              d={cablePath(plug, match)}
+              style={{
+                stroke: `var(${CABLE_COLORS[index % CABLE_COLORS.length]})`,
+              }}
+            />
+          ))}
+        </svg>
+        {[...SOCKETS].map(([letter, {x, y}]) => (
+          <button
+            key={letter}
+            type="button"
+            className="socket"
+            data-connected={isConnected(connections.get(letter)) || undefined}
+            aria-pressed={letter === pending}
+            aria-label={describe(letter)}
+            style={{left: x - SOCKET / 2, top: y - SOCKET / 2}}
+            onClick={() => onToggle(letter)}
+          >
+            {letter}
+          </button>
+        ))}
+      </div>
+      <p className="hint" aria-live="polite">
+        {pending
+          ? `Pick a letter to connect to ${pending}, or ${pending} again to cancel.`
+          : 'Click two letters to cable them together. Click a cabled letter to unplug it. Changing cables starts a new message.'}
+      </p>
     </fieldset>
   );
-}
-
-/**
- * Open a new connection by setting the plug state as PENDING
- * @param {Function} setConnections Dispatch Function
- * @param {string} plug the plug to initialize
- */
-function initConnection(
-  setConnections: React.Dispatch<React.SetStateAction<Connections>>,
-  plug: string,
-) {
-  setConnections(
-    createNewMap((l) => {
-      if (l[0] === plug) l[1] = PENDING;
-      return l;
-    }),
-  );
-}
-
-/**
- * Complete the latest PENDING connection state
- * @param {Function} setConnections Dispatch Function
- * @param {string} plug the plug to close the connection
- * @param {string} match the matching plug
- */
-function makeConnection(
-  setConnections: React.Dispatch<React.SetStateAction<Connections>>,
-  plug: string,
-  match: string | null,
-) {
-  setConnections(
-    createNewMap((tuple) => {
-      let [, currentMatch] = tuple;
-      const [currentPlug] = tuple;
-
-      if (currentPlug === plug) currentMatch = match;
-      if (currentPlug === match) currentMatch = plug;
-
-      return [currentPlug, currentMatch];
-    }),
-  );
-}
-
-/**
- * Remove the connection between the plug and its match
- * or the current PENDING state if no match
- * @param {Function} setConnections Dispatch Function
- * @param {string} plug
- * @param {string | null} match
- */
-function removeConnection(
-  setConnections: React.Dispatch<React.SetStateAction<Connections>>,
-  plug: string,
-  match: string | null,
-) {
-  setConnections(
-    createNewMap((tuple) => {
-      let [, currentMatch] = tuple;
-      const [currentPlug] = tuple;
-
-      if (currentPlug === plug) currentMatch = null;
-      if (currentPlug === match) currentMatch = null;
-
-      return [currentPlug, currentMatch];
-    }),
-  );
-}
-
-function getStatus(matchVal: string | null) {
-  switch (matchVal) {
-    case null:
-      // Empty string, the input is unchecked
-      return UNCHECKED;
-    case PENDING:
-      // Pending state, waiting for a match
-      return INDETERMINATE;
-    default:
-      // Has a value
-      return CHECKED;
-  }
-}
-
-/** Apply callback function to each element of 
-the previous map and returns a new one */
-function createNewMap<T>(cb: (a: [T, T | null]) => [T, T | null]) {
-  return function (previousMap: Map<T, T | null>) {
-    return new Map([...previousMap].map(cb));
-  };
 }

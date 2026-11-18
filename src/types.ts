@@ -2,19 +2,16 @@
  * Action types for the reducer
  */
 export type ActionTypes =
-  | 'setup'
-  | 'init'
-  | 'position'
-  | 'encode'
-  | 'jump'
-  | 'reset';
+  'setup' | 'position' | 'encode' | 'jump' | 'rewind' | 'reset';
 
 export type ActionPayload = {
   position: number;
   type: number;
   rotors: Rotor[];
   types: number[];
-  plainText: string;
+  /** The key pressed on the keyboard */
+  key: string;
+  /** The key after passing through the plugboard */
   updateChar: string;
   reflector: Reflector;
 };
@@ -79,8 +76,12 @@ export interface TraceStage {
  */
 export type Connections = Map<string, string | null>;
 
-export interface PlugState {
-  letter: string;
-  status: -1 | 0 | 1;
-  onChange: React.ChangeEventHandler<HTMLInputElement>;
+/**
+ * Everything needed to set the machine up before a message
+ */
+export interface MachineSetup {
+  types: number[];
+  positions: number[];
+  reflector: Reflector;
+  connections: Connections;
 }

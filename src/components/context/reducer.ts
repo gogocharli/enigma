@@ -72,16 +72,17 @@ function rotorReducer(state: RotorState, action: Action): RotorState {
       const updatedRotors = updateRotorsPositions(previousRotors);
 
       // Get the corresponding character from the cypher
-      const {plainText, updateChar} = action.payload;
+      const {key, updateChar} = action.payload;
       const encodeChar = initReflector(reflector);
 
-      if (!updateChar || !plainText) return state;
+      if (!updateChar || !key) return state;
 
       const newCipherChar = encodeChar(updateChar, updatedRotors);
       return {
         ...state,
         rotors: updatedRotors,
-        plainText,
+        // Appending here keeps quick successive key presses in order
+        plainText: state.plainText + key,
         encodedText: encodedText + newCipherChar,
         lastAction: 'encode',
       };
@@ -92,6 +93,20 @@ function rotorReducer(state: RotorState, action: Action): RotorState {
         ...state,
         ...action.payload,
         lastAction: 'jump',
+      };
+    }
+    case 'rewind': {
+      // Start a new message from the given rotor positions
+      const {rotors} = action.payload;
+
+      if (!rotors) return state;
+
+      return {
+        ...state,
+        rotors,
+        plainText: '',
+        encodedText: '',
+        lastAction: 'setup',
       };
     }
     case 'reset': {
@@ -109,6 +124,7 @@ function rotorReducer(state: RotorState, action: Action): RotorState {
 interface InitOptions {
   lastAction?: ActionTypes;
   reflector?: Reflector;
+  positions?: number[];
 }
 /**
  * Create the default state from a set of rotor types
@@ -117,8 +133,15 @@ function initRotors(
   initialTypes: number[],
   options: InitOptions = {},
 ): RotorState {
-  const rotors = getRotors(initialTypes);
-  const {lastAction = 'init', reflector = DEFAULT_REFLECTOR} = options;
+  const {
+    lastAction = 'setup',
+    reflector = DEFAULT_REFLECTOR,
+    positions = [],
+  } = options;
+  const rotors = getRotors(initialTypes).map((rotor, index) => ({
+    ...rotor,
+    position: positions[index] ?? 0,
+  }));
   return {
     rotors,
     plainText: '',
